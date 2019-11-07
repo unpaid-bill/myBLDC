@@ -15,7 +15,7 @@
 #include "tim.h"
 #include <stdio.h>
 #include <math.h>
-#include "drv8303.h"
+#include "drv8323.h"
 #include "adc.h"
 #include "dma.h"
 #include "iwdg.h"

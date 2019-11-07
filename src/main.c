@@ -13,16 +13,6 @@ void myDelay(uint32_t mS){
 }
 
 
-void blink_fault(void){
-    pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
-    myDelay(50);
-    pin_set(LED_FAULT_Port, LED_FAULT_Pin);
-    myDelay(50);
-    pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
-    myDelay(50);
-    pin_set(LED_FAULT_Port, LED_FAULT_Pin);
-}
-
 int main(void)
 {   
     // SystemInit();
@@ -114,8 +104,8 @@ int main(void)
     // uint16_t tx;
     uint16_t rx;
 
-    drv8303_TypeDef drv;
-    drv8303_Init(&drv, SPI1); // assigns SPI1 peripheral to DRV8303
+    drv8323_TypeDef drv;
+    drv8323_Init(&drv, SPI1); // assigns SPI1 peripheral to drv8323
     // drv_update(&drv);
 
     // sets OC_ADJ_SET to 24 (Vds = 1.043v)
@@ -127,7 +117,7 @@ int main(void)
     pin_set(ENABLE_Port, ENABLE_Pin);
     myDelay(100);
     drv_write(&drv, DRV_CTRL_1, set_reg);
-    printf("\nEnabled DRV8303\n");
+    printf("\nEnabled drv8323\n");
 
     transmit_uart(USART3, "test\n", 5);
 
@@ -209,4 +199,14 @@ void error_handler(void){
         myDelay(500);
         watchdog_reload();
     }
+}
+
+void blink_fault(void){
+    pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
+    myDelay(50);
+    pin_set(LED_FAULT_Port, LED_FAULT_Pin);
+    myDelay(50);
+    pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
+    myDelay(50);
+    pin_set(LED_FAULT_Port, LED_FAULT_Pin);
 }
