@@ -19,6 +19,8 @@
 #include "adc.h"
 #include "dma.h"
 #include "iwdg.h"
+#include "hw_init.h"
+#include "irq.h"
 
 /* Private define ------------------------------------------------------------*/
 #define PI 3.14159265358979323846264
@@ -73,16 +75,14 @@
 #define USART_Pin_RX    11
 
 
-// #define B1_Pin GPIO_PIN_13
-// #define B1_GPIO_Port GPIOC
-// #define B1_EXTI_IRQn EXTI15_10_IRQn
-// #define USART_TX_Pin GPIO_PIN_2
-// #define USART_TX_GPIO_Port GPIOA
-// #define USART_RX_Pin GPIO_PIN_3
-// #define USART_RX_GPIO_Port GPIOA
-// #define SWO_Pin GPIO_PIN_3
-// #define SWO_GPIO_Port GPIOB
+/* Variable decleration ------------------------------------------------------*/
+volatile uint32_t myTicks;
+uint16_t ADC_samples[10];
 
+
+/* Function prototypes -------------------------------------------------------*/
+void blink_fault(void);
+void error_handler(void);
 
 
 #endif /* __MAIN_H__ */

@@ -33,7 +33,9 @@ src/adc.c \
 src/dma.c \
 src/delay.c \
 src/drv8303.c \
-src/iwdg.c
+src/iwdg.c \
+src/hw_init.c \
+src/irq.c
 
 # ASM sources
 ASM_SOURCES =  \

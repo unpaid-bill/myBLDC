@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/motor_driver.elf",
+            "name": "Debug (OpenOCD)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "svdFile": "./STM32F103.svd",
+            "configFiles": [
+                "/home/jon/Downloads/openocd-0.10.0/tcl/interface/stlink-v2-1.cfg",
+                "/home/jon/Downloads/openocd-0.10.0/tcl/target/stm32f1x.cfg"
+            ]
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "stutil",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/motor_driver.elf",
+            "name": "Debug (ST-Util)",
+            "device": "STM32F103C8",
+            "v1": false
+        }
+    ]
+}
