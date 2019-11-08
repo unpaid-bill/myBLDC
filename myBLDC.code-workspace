@@ -6,7 +6,13 @@
 	],
 	"settings": {
 		"files.associations": {
-			"gpio.h": "c"
+			"gpio.h": "c",
+			"hw_init.h": "c",
+			"irq.h": "c",
+			"spi.h": "c",
+			"hardware.h": "c",
+			"uart.h": "c",
+			"stm32f103xb.h": "c"
 		}
 	}
 }

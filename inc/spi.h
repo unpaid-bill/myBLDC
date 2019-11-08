@@ -3,10 +3,8 @@
 
 // #include "stm32f1xx_hal.h"
 #include "stm32f103xb.h"
+#include "hardware.h"
 #include "gpio.h"
-#include "main.h"
-#include <stdio.h>
-#include <stdint.h>
 
 #define SPI_TIMEOUT 1000
 #define SPI_CS_PIN 4
