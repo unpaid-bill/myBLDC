@@ -121,7 +121,7 @@ int main(void)
 
     // drv8323_TypeDef drv;
     // drv8323_Init(&drv, SPI1); // assigns SPI1 peripheral to drv8323
-    motor_init_drv(&m, SPI1);
+    motor_init_drv(&m, SPI1, TIM1);
     // drv_update(&drv);
 
     // sets OC_ADJ_SET to 24 (Vds = 1.043v)
@@ -150,14 +150,14 @@ int main(void)
     TIM1_enable();
 
 
-    uint32_t angle_a = 0;
-    uint32_t angle_b = 120;
-    uint32_t angle_c = 240;
-    uint32_t max_duty_cycle = 7500;
-    uint16_t duty_cycle_a;
-    uint16_t duty_cycle_b;
-    uint16_t duty_cycle_c;
-    uint16_t angle_step = 30;
+    // uint32_t angle_a = 0;
+    // uint32_t angle_b = 120;
+    // uint32_t angle_c = 240;
+    // uint32_t max_duty_cycle = 7500;
+    // uint16_t duty_cycle_a;
+    // uint16_t duty_cycle_b;
+    // uint16_t duty_cycle_c;
+    // uint16_t angle_step = 30;
     
     watchdog_reload();
     printf("Interrupts enabled\n");
@@ -184,18 +184,8 @@ int main(void)
         // }
         // printf("%d\n", ADC_samples[4]);
         
-        duty_cycle_a = ((sin(angle_a * (PI/180))+1)/2)*max_duty_cycle;
-        duty_cycle_b = ((sin(angle_b * (PI/180))+1)/2)*max_duty_cycle;
-        duty_cycle_c = ((sin(angle_c * (PI/180))+1)/2)*max_duty_cycle;
-        // global_angle = fmod(global_angle, 360);
-        angle_a = (angle_a + angle_step) % 360;
-        angle_b =  angle_a + 120;
-        angle_c =  angle_a + 240;
-        // printf("%d, %d, %d, %d\n", (uint32_t)duty_cycle_a, (uint32_t)duty_cycle_b, (uint32_t)duty_cycle_c, angle_a);
-
-        TIM1->CCR1  = duty_cycle_a;
-        TIM1->CCR2  = duty_cycle_b;
-        TIM1->CCR3  = duty_cycle_c;
+        update_foc_params(&m);
+        motor_update(&m);
 
         watchdog_reload();
         myDelay(t_del);
