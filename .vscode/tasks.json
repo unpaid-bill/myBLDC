@@ -32,6 +32,22 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "type": "shell",
+            "label": "make (rebuild)",
+            "dependsOn":[
+                "make clean",
+                "make only"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
