@@ -43,20 +43,37 @@ uint16_t drv_read(drv8323_TypeDef *drv, uint32_t drv_reg){
 }
 
 
-void drv_write_reg(drv8323_TypeDef *drv, uint16_t reg){
+void drv_write_reg(drv8323_TypeDef *drv, uint16_t reg, uint16_t data){
 
+    data &= 0x7FF; // cut to lower 10 bits
+    uint16_t tx_reg = 0;
+    tx_reg |= (reg & 0x7800);
+    tx_reg |= data;
+    // SPI_Transfer(drv->spi, tx_reg);
+    // uint16_t rx_reg = SPI_Transcieve(drv->spi, 0b1000000000000000);
+
+    return;
 }
 
-void drv_read_reg(drv8323_TypeDef *drv, uint16_t reg){
-    
+uint16_t drv_read_reg(drv8323_TypeDef *drv, uint16_t reg){
+    uint16_t tx_reg = 0;
+    tx_reg |= (reg & 0x7800);
+    tx_reg |= (1 << 15);
+    // SPI_Transfer(drv->spi, tx_reg);
+    // uint16_t rx_reg = SPI_Transcieve(drv->spi, 0b1000000000000000);
+    return 0;
 }
 
 void drv_update(drv8323_TypeDef *drv){
 
-    SPI_Transfer(drv->spi, 0b1000000000000000);
-    drv->SR1 = SPI_Transcieve(drv->spi, 0b1001000000000000);
-    drv->SR2 = SPI_Transcieve(drv->spi, 0b1010000000000000);
-    drv->CR1 = SPI_Transcieve(drv->spi, 0b1011000000000000);
-    drv->CR2 = SPI_Transcieve(drv->spi, 0b1000000000000000);
+    // SPI_Transfer(drv->spi, 0b1000000000000000);
+    drv->CSA_control    = SPI_Transcieve(drv->spi, DRV_CSA_CONTROL);
+    drv->driver_control = SPI_Transcieve(drv->spi, DRV_DRIVER_CONTROL);
+    drv->fault_status_1 = SPI_Transcieve(drv->spi, DRV_FAULT_STATUS_1);
+    drv->gate_drive_HS  = SPI_Transcieve(drv->spi, DRV_GATE_DRIVE_HS);
+    drv->gate_drive_LS  = SPI_Transcieve(drv->spi, DRV_GATE_DRIVE_LS);
+    drv->OCP_control    = SPI_Transcieve(drv->spi, DRV_OCP_CONTROL);
+    drv->VGS_status_2   = SPI_Transcieve(drv->spi, DRV_VGS_STATUS_2);
+
     
 }

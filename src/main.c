@@ -1,4 +1,18 @@
-#include "main.h"
+#include "hardware.h"
+#include <stdio.h>
+#include <math.h>
+#include "stm32f1xx.h"
+#include "spi.h"
+#include "drv8323.h"
+#include "uart.h"
+#include "gpio.h"
+#include "tim.h"
+#include "adc.h"
+#include "dma.h"
+#include "iwdg.h"
+#include "hw_init.h"
+#include "irq.h"
+#include "bldc.h"
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -12,6 +26,7 @@ void myDelay(uint32_t mS){
     while(myTicks<mS);
 }
 
+motor_TypeDef m;
 
 int main(void)
 {   
@@ -104,8 +119,9 @@ int main(void)
     // uint16_t tx;
     uint16_t rx;
 
-    drv8323_TypeDef drv;
-    drv8323_Init(&drv, SPI1); // assigns SPI1 peripheral to drv8323
+    // drv8323_TypeDef drv;
+    // drv8323_Init(&drv, SPI1); // assigns SPI1 peripheral to drv8323
+    motor_init_drv(&m, SPI1);
     // drv_update(&drv);
 
     // sets OC_ADJ_SET to 24 (Vds = 1.043v)
@@ -113,10 +129,10 @@ int main(void)
     // sets drv to 3-PWM mode
     // uint16_t set_reg = 0b01000000000 | 0b00000110000 | 0b00000001000;
     // uint16_t set_reg = (CR1_OC_ADJ_SET_24 | CR1_OCP_MODE_DISABLED | CR1_PWM_MODE_3);
-    uint16_t set_reg = (CR1_OC_ADJ_SET_7 | CR1_PWM_MODE_3);
+    // uint16_t set_reg = (CR1_OC_ADJ_SET_7 | CR1_PWM_MODE_3);
     pin_set(ENABLE_Port, ENABLE_Pin);
     myDelay(100);
-    drv_write(&drv, DRV_CTRL_1, set_reg);
+    // drv_write(&drv, DRV_CTRL_1, set_reg);
     printf("\nEnabled drv8323\n");
 
     transmit_uart(USART3, "test\n", 5);
@@ -124,8 +140,8 @@ int main(void)
     myDelay(50);
 
     printf("transmitting to drv\n");
-    rx = drv_read(&drv, DRV_STATUS_1);
-    printf("Status register 1\t");   print_reg(rx, 16);
+    rx = drv_read_reg(&m.drv, DRV_GATE_DRIVE_HS);
+    printf("Gate Drive HS register\t");   print_reg(rx, 16);
     if (rx == 0){
         error_handler();
     }

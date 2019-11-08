@@ -3,9 +3,6 @@
 
 #include "stm32f103xb.h"
 #include "spi.h"
-#include "main.h"
-#include "uart.h"
-#include "gpio.h"
 
 typedef struct
 {
@@ -13,33 +10,28 @@ typedef struct
     uint16_t VGS_status_2;
     uint16_t driver_control;
     uint16_t gate_drive_HS;
-    uint16_t gate_drive_ls;
+    uint16_t gate_drive_LS;
     uint16_t OCP_control;
     uint16_t CSA_control;
     SPI_TypeDef *spi;
 } drv8323_TypeDef;
 
 
-/*******      Register Address Definitions       *******/
-#define DRV_STATUS_1                0x0U << 11
-#define DRV_STATUS_2                0x1U << 11
-#define DRV_CTRL_1                  0x2U << 11
-#define DRV_CTRL_2                  0x3U << 11
-
-#define DRV_FAULT_STATUS_1          0x0U << 11
-#define DRV_VGS_STATUS_2            0x1U << 11
-#define DRV_DRIVER_CONTROL          0x2U << 11
-#define DRV_GATE_DRIVE_HS           0x3U << 11
-#define DRV_GATE_DRIVE_LS           0x4U << 11
-#define DRV_OCP_CONTROL             0x5U << 11
-#define DRV_CSA_CONTROL             0x6U << 11
+/**************  Register Address Definitions  **************/
+#define DRV_FAULT_STATUS_1          (0x0U << 11)
+#define DRV_VGS_STATUS_2            (0x1U << 11)
+#define DRV_DRIVER_CONTROL          (0x2U << 11)
+#define DRV_GATE_DRIVE_HS           (0x3U << 11)
+#define DRV_GATE_DRIVE_LS           (0x4U << 11)
+#define DRV_OCP_CONTROL             (0x5U << 11)
+#define DRV_CSA_CONTROL             (0x6U << 11)
 
 
 /*******  Bit definitions for Fault Status 1 register  *******/
-#define FS1_FAULT_Pos                  (10U)
+#define FS1_FAULT_Pos                  10U
 #define FS1_FAULT_Msk                  (0x1U << FS1_FAULT_Pos)
 #define FS1_FAULT                      FS1_FAULT_Msk
-#define FS1_VDS_OCP_Pos                (9U)
+#define FS1_VDS_OCP_Pos                9U
 #define FS1_VDS_OCP_Msk                (0x1U << FS1_VDS_OCP_Pos)
 #define FS1_VDS_OCP                    FS1_VDS_OCP_Msk
 #define FS1_GDF_Pos                    (8U)
@@ -144,26 +136,26 @@ typedef struct
 #define GATE_DRV_HS_IDRIVEN_HS_Pos     (0U)
 #define GATE_DRV_HS_IDRIVEN_HS_Msk     (0xFU << GATE_DRV_HS_IDRIVEN_HS_Pos)
 #define GATE_DRV_HS_IDRIVEN_HS         GATE_DRV_HS_IDRIVEN_HS_Msk
-#define GATE_DRV_HS_IDRIVEN_HS_0       (0x1U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_1       (0x2U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_2       (0x4U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_3       (0x8U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_20mA    (0x0U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_60mA    (0x1U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_120mA   (0x2U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_160mA   (0x3U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_240mA   (0x4U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_280mA   (0x5U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_340mA   (0x6U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_380mA   (0x7U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_520mA   (0x8U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_660mA   (0x9U << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_740mA   (0xAU << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_880mA   (0xBU << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_1140mA  (0xCU << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_1360mA  (0xDU << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_1640mA  (0xEU << GATE_DRV_HS_IDRIVEN_HS_Pos)
-#define GATE_DRV_HS_IDRIVEN_HS_2000mA  (0xFU << GATE_DRV_HS_IDRIVEN_HS_Pos)
+#define GATE_DRV_HS_IDRIVEN_HS_0       0x1U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_1       0x2U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_2       0x4U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_3       0x8U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_20mA    0x0U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_60mA    0x1U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_120mA   0x2U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_160mA   0x3U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_240mA   0x4U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_280mA   0x5U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_340mA   0x6U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_380mA   0x7U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_520mA   0x8U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_660mA   0x9U << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_740mA   0xAU << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_880mA   0xBU << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_1140mA  0xCU << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_1360mA  0xDU << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_1640mA  0xEU << GATE_DRV_HS_IDRIVEN_HS_Pos
+#define GATE_DRV_HS_IDRIVEN_HS_2000mA  0xFU << GATE_DRV_HS_IDRIVEN_HS_Pos
 
 /*******  Bit definitions for Gate Drive LS register  ********/
 #define GATE_DRV_LS_CBC_Pos            (10U)
@@ -242,175 +234,105 @@ typedef struct
 #define OCP_CTRL_DEAD_TIME_100ns    (0x1U << OCP_CTRL_DEAD_TIME_Pos)
 #define OCP_CTRL_DEAD_TIME_200ns    (0x2U << OCP_CTRL_DEAD_TIME_Pos)
 #define OCP_CTRL_DEAD_TIME_400ns    (0x3U << OCP_CTRL_DEAD_TIME_Pos)
+
+#define OCP_CTRL_OCP_MODE_Pos       (6U)
+#define OCP_CTRL_OCP_MODE_Msk       (0x3U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE           OCP_CTRL_OCP_MODE_Msk
+#define OCP_CTRL_OCP_MODE_0         (0x1U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE_1         (0x2U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE_LATCH     (0x0U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE_RETRY     (0x1U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE_REPORT    (0x2U << OCP_CTRL_OCP_MODE_Pos)
+#define OCP_CTRL_OCP_MODE_NO_ACT    (0x3U << OCP_CTRL_OCP_MODE_Pos)
+
+#define OCP_CTRL_OCP_DEG_Pos        (4U)
+#define OCP_CTRL_OCP_DEG_Msk        (0x3U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG            OCP_CTRL_OCP_DEG_Msk
+#define OCP_CTRL_OCP_DEG_0          (0x1U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG_1          (0x2U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG_2us        (0x0U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG_4us        (0x1U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG_6us        (0x2U << OCP_CTRL_OCP_DEG_Pos)
+#define OCP_CTRL_OCP_DEG_8us        (0x3U << OCP_CTRL_OCP_DEG_Pos)
+
+#define OCP_CTRL_VDS_LVL_Pos        (0U)
+#define OCP_CTRL_VDS_LVL_Msk        (0xFU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL            OCP_CTRL_VDS_LVL_Msk
+#define OCP_CTRL_VDS_LVL_0          (0x1U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1          (0x2U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_2          (0x4U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_3          (0x8U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_06V      (0x0U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_13V      (0x1U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_20V      (0x2U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_26V      (0x3U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_31V      (0x4U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_45V      (0x5U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_53V      (0x6U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_60V      (0x7U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_68V      (0x8U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_75V      (0x9U << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_0_94V      (0xAU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1_13V      (0xBU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1_30V      (0xCU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1_50V      (0xDU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1_70V      (0xEU << OCP_CTRL_VDS_LVL_Pos)
+#define OCP_CTRL_VDS_LVL_1_88V      (0xFU << OCP_CTRL_VDS_LVL_Pos)
+
 /*******  Bit definitions for CSA Control register  **********/
+#define CSA_CTRL_CSA_FET_Pos        (10U)
+#define CSA_CTRL_CSA_FET_Msk        (0x1U << CSA_CTRL_CSA_FET_Pos)
+#define CSA_CTRL_CSA_FET            CSA_CTRL_CSA_FET_Msk
 
+#define CSA_CTRL_VREF_DIV_Pos       (9U)
+#define CSA_CTRL_VREF_DIV_Msk       (0x1U << CSA_CTRL_VREF_DIV_Pos)
+#define CSA_CTRL_VREF_DIV           CSA_CTRL_VREF_DIV_Msk
 
-/*******  Bit definitions for Status Register 1  *******/
-#define SR1_FETLC_OC_Pos            (0U)
-#define SR1_FETLC_OC_Msk            (0x1U << SR1_FETLC_OC_Pos)
-#define SR1_FETLC_OC                SR1_FETLC_OC_Msk
-#define SR1_FETHC_OC_Pos            (1U)
-#define SR1_FETHC_OC_Msk            (0x1U << SR1_FETHC_OC_Pos)
-#define SR1_FETHC_OC                SR1_FETHC_OC_Msk
-#define SR1_FETLB_OC_Pos            (2U)
-#define SR1_FETLB_OC_Msk            (0x1U << SR1_FETLB_OC_Pos)
-#define SR1_FETLB_OC                SR1_FETLB_OC_Msk
-#define SR1_FETHB_OC_Pos            (3U)
-#define SR1_FETHB_OC_Msk            (0x1U << SR1_FETHB_OC_Pos)
-#define SR1_FETHB_OC                SR1_FETHB_OC_Msk
-#define SR1_FETLA_OC_Pos            (4U)
-#define SR1_FETLA_OC_Msk            (0x1U << SR1_FETLA_OC_Pos)
-#define SR1_FETLA_OC                SR1_FETLA_OC_Msk
-#define SR1_FETHA_OC_Pos            (5U)
-#define SR1_FETHA_OC_Msk            (0x1U << SR1_FETHA_OC_Pos)
-#define SR1_FETHA_OC                SR1_FETHA_OC_Msk
+#define CSA_CTRL_LS_REF_Pos         (8U)
+#define CSA_CTRL_LS_REF_Msk         (0x1U << CSA_CTRL_LS_REF_Pos)
+#define CSA_CTRL_LS_REF             CSA_CTRL_LS_REF_Msk
 
-#define SR1_OTW_Pos                 (6U)
-#define SR1_OTW_Msk                 (0x1U << SR1_OTW_Pos)
-#define SR1_OTW                     SR1_OTW_Msk
-#define SR1_OTSD_Pos                (7U)
-#define SR1_OTSD_Msk                (0x1U << SR1_OTSD_Pos)
-#define SR1_OTSD                    SR1_OTSD_Msk
-#define SR1_PVDD_Pos                (8U)
-#define SR1_PVDD_Msk                (0x1U << SR1_PVDD_Pos)
-#define SR1_PVDD                    SR1_PVDD_Msk
-#define SR1_GVDD_Pos                (9U)
-#define SR1_GVDD_Msk                (0x1U << SR1_GVDD_Pos)
-#define SR1_GVDD                    SR1_GVDD_Msk
-#define SR1_FAULT_Pos               (10U)
-#define SR1_FAULT_Msk               (0x1U << SR1_FAULT_Pos)
-#define SR1_FAULT                   SR1_FAULT_Msk
+#define CSA_CTRL_CSA_GAIN_Pos       (6U)
+#define CSA_CTRL_CSA_GAIN_Msk       (0x3U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN           CSA_CTRL_CSA_GAIN_Msk
+#define CSA_CTRL_CSA_GAIN_0         (0x1U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN_1         (0x2U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN_5VV       (0x0U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN_10VV      (0x1U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN_20VV      (0x2U << CSA_CTRL_CSA_GAIN_Pos)
+#define CSA_CTRL_CSA_GAIN_40VV      (0x3U << CSA_CTRL_CSA_GAIN_Pos)
 
-/*******  Bit definitions for Status Register 2  *******/
-#define SR2_DEVICE_ID_Pos           (0U)
-#define SR2_DEVICE_ID_Msk           (0xFU << SR2_DEVICE_ID_Pos)
-#define SR2_DEVICE_ID               SR2_DEVICE_ID_Msk
+#define CSA_CTRL_DIS_EN_Pos         (5U)
+#define CSA_CTRL_DIS_EN_Msk         (0x1U << CSA_CTRL_DIS_EN_Pos)
+#define CSA_CTRL_DIS_EN             CSA_CTRL_DIS_EN_Msk
 
-#define SR2_GVDD_OV_Pos             (7U)
-#define SR2_GVDD_OV_Msk             (0x1U << SR2_GVDD_OV_Pos)
-#define SR2_GVDD_OV                 SR2_GVDD_OV_Msk
+#define CSA_CTRL_CSA_CAL_A_Pos      (4U)
+#define CSA_CTRL_CSA_CAL_A_Msk      (0x1U << CSA_CTRL_CSA_CAL_A_Pos)
+#define CSA_CTRL_CSA_CAL_A          CSA_CTRL_CSA_CAL_A_Msk
+#define CSA_CTRL_CSA_CAL_B_Pos      (3U)
+#define CSA_CTRL_CSA_CAL_B_Msk      (0x1U << CSA_CTRL_CSA_CAL_B_Pos)
+#define CSA_CTRL_CSA_CAL_B          CSA_CTRL_CSA_CAL_B_Msk
+#define CSA_CTRL_CSA_CAL_C_Pos      (2U)
+#define CSA_CTRL_CSA_CAL_C_Msk      (0x1U << CSA_CTRL_CSA_CAL_C_Pos)
+#define CSA_CTRL_CSA_CAL_C          CSA_CTRL_CSA_CAL_C_Msk
 
-/*******  Bit definitions for Control Register 1  *******/
-/* Gate current configuration */
-#define CR1_GATE_CURRENT_Pos        (0U)
-#define CR1_GATE_CURRENT_Msk        (0x3U << CR1_GATE_CURRENT_Pos)
-#define CR1_GATE_CURRENT            CR1_GATE_CURRENT_Msk
-#define CR1_GATE_CURRENT_0          (0x1U << CR1_GATE_CURRENT_Pos)
-#define CR1_GATE_CURRENT_1          (0x2U << CR1_GATE_CURRENT_Pos)
-
-#define CR1_GATE_CURRENT_1_7A       0x000U
-#define CR1_GATE_CURRENT_0_7A       0x001U
-#define CR1_GATE_CURRENT_0_25A      0x002U
-
-#define CR1_GATE_RESET_Pos          (2U)
-#define CR1_GATE_RESET_Msk          (0x1U << CR1_GATE_RESET_Pos)
-#define CR1_GATE_RESET              CR1_GATE_RESET_Msk
-
-/* PWM mode configuration */
-#define CR1_PWM_MODE_Pos            (3U)
-#define CR1_PWM_MODE_Msk            (0x1U << CR1_PWM_MODE_Pos)
-#define CR1_PWM_MODE                CR1_PWM_MODE_Msk
-
-#define CR1_PWM_MODE_6              0x000U
-#define CR1_PWM_MODE_3              CR1_PWM_MODE
-
-/* Over-current protection configuration */
-#define CR1_OCP_MODE_Pos            (4U)
-#define CR1_OCP_MODE_Msk            (0x3U << CR1_OCP_MODE_Pos)
-#define CR1_OCP_MODE                CR1_OCP_MODE_Msk
-#define CR1_OCP_MODE_0              (0x1U << CR1_OCP_MODE_Pos)
-#define CR1_OCP_MODE_1              (0x2U << CR1_OCP_MODE_Pos)
-
-#define CR1_OCP_MODE_LIMIT          0x000U
-#define CR1_OCP_MODE_LATCH          0x010U
-#define CR1_OCP_MODE_REPORT         0x020U
-#define CR1_OCP_MODE_DISABLED       0x030U
-
-/* Over-current adjust configuration */
-#define CR1_OC_ADJ_SET_Pos          (6U)
-#define CR1_OC_ADJ_SET_Msk          (0x1F << CR1_OC_ADJ_SET_Pos)
-#define CR1_OC_ADJ_SET              CR1_OC_ADJ_SET_Msk
-// #define CR1_OC_ADJ_SET_0            (0x1U << CR1_OC_ADJ_SET_Pos)
-// #define CR1_OC_ADJ_SET_1            (0x2U << CR1_OC_ADJ_SET_Pos)
-// #define CR1_OC_ADJ_SET_2            (0x3U << CR1_OC_ADJ_SET_Pos)
-// #define CR1_OC_ADJ_SET_3            (0x4U << CR1_OC_ADJ_SET_Pos)
-// #define CR1_OC_ADJ_SET_4            (0x5U << CR1_OC_ADJ_SET_Pos)
-
-#define CR1_OC_ADJ_SET_0            0x000U
-#define CR1_OC_ADJ_SET_1            0x040U
-#define CR1_OC_ADJ_SET_2            0x080U
-#define CR1_OC_ADJ_SET_3            0x0C0U
-#define CR1_OC_ADJ_SET_4            0x100U
-#define CR1_OC_ADJ_SET_5            0x140U
-#define CR1_OC_ADJ_SET_6            0x180U
-#define CR1_OC_ADJ_SET_7            0x1C0U
-#define CR1_OC_ADJ_SET_8            0x200U
-#define CR1_OC_ADJ_SET_9            0x240U
-#define CR1_OC_ADJ_SET_10           0x280U
-#define CR1_OC_ADJ_SET_11           0x2C0U
-#define CR1_OC_ADJ_SET_12           0x300U
-#define CR1_OC_ADJ_SET_13           0x340U
-#define CR1_OC_ADJ_SET_14           0x380U
-#define CR1_OC_ADJ_SET_15           0x3C0U
-#define CR1_OC_ADJ_SET_16           0x400U
-#define CR1_OC_ADJ_SET_17           0x440U
-#define CR1_OC_ADJ_SET_18           0x480U
-#define CR1_OC_ADJ_SET_19           0x4C0U
-#define CR1_OC_ADJ_SET_20           0x500U
-#define CR1_OC_ADJ_SET_21           0x540U
-#define CR1_OC_ADJ_SET_22           0x580U
-#define CR1_OC_ADJ_SET_23           0x5C0U
-#define CR1_OC_ADJ_SET_24           0x600U
-#define CR1_OC_ADJ_SET_25           0x640U
-#define CR1_OC_ADJ_SET_26           0x680U
-#define CR1_OC_ADJ_SET_27           0x6C0U
-#define CR1_OC_ADJ_SET_28           0x700U
-#define CR1_OC_ADJ_SET_29           0x740U
-#define CR1_OC_ADJ_SET_30           0x780U
-#define CR1_OC_ADJ_SET_31           0x7C0U
-
-/*******  Bit definitions for Control Register 2  *******/
-#define CR2_OCTW_MODE_Pos           (0U)
-#define CR2_OCTW_MODE_Msk           (0x2U << CR2_OCTW_MODE_Pos)
-#define CR2_OCTW_MODE               CR2_OCTW_MODE_Msk
-#define CR2_OCTW_MODE_0             (0x1U << CR2_OCTW_MODE_Pos)
-#define CR2_OCTW_MODE_1             (0x2U << CR2_OCTW_MODE_Pos)
-
-#define CR2_OCTW_MODE_OT_OC         0x000U
-#define CR2_OCTW_MODE_OT            0x001U
-#define CR2_OCTW_MODE_OC            0x002U
-
-#define CR2_GAIN_Pos                (2U)
-#define CR2_GAIN_Msk                (0x2U << CR2_GAIN_Pos)
-#define CR2_GAIN                    CR2_GAIN_Msk
-#define CR2_GAIN_Msk_0              (0x1U << CR2_GAIN_Pos)
-#define CR2_GAIN_Msk_1              (0x2U << CR2_GAIN_Pos)
-
-#define CR2_GAIN_10                 0x000U
-#define CR2_GAIN_20                 0x004U
-#define CR2_GAIN_40                 0x008U
-#define CR2_GAIN_80                 0x00CU
-
-#define CR2_DC_CAL_CH1_Pos          (4U)
-#define CR2_DC_CAL_CH1_Msk          (0x1U << CR2_DC_CAL_CH1_Pos)
-#define CR2_DC_CAL_CH1              CR2_DC_CAL_CH1_Msk
-#define CR2_DC_CAL_CH2_Pos          (5U)
-#define CR2_DC_CAL_CH2_Msk          (0x1U << CR2_DC_CAL_CH2_Pos)
-#define CR2_DC_CAL_CH2              CR2_DC_CAL_CH2_Msk
-
-#define CR2_OC_TOFF_Pos             (6U)
-#define CR2_OC_TOFF_Msk             (0x1U << CR2_OC_TOFF_Pos)
-#define CR2_OC_TOFF                 CR2_OC_TOFF_Msk
+#define CSA_CTRL_SEN_LVL_Pos        (0U)
+#define CSA_CTRL_SEN_LVL_Msk        (0x3U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL            CSA_CTRL_SEN_LVL_Msk
+#define CSA_CTRL_SEN_LVL_0          (0x1U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL_1          (0x2U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL_0_25V      (0x0U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL_0_50V      (0x1U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL_0_75V      (0x2U << CSA_CTRL_SEN_LVL_Pos)
+#define CSA_CTRL_SEN_LVL_1_00V      (0x3U << CSA_CTRL_SEN_LVL_Pos)
 
 
 
+/**************  function prototypes  *****************/
 void drv8323_Init(drv8323_TypeDef *drv, SPI_TypeDef *spi);
 uint16_t drv_transceive(drv8323_TypeDef *drv, uint16_t tx_reg);
-uint16_t drv_write(drv8323_TypeDef *drv, uint32_t drv_reg, uint16_t payload);
-uint16_t drv_transceive(drv8323_TypeDef *drv, uint16_t tx_reg);
-uint16_t drv_read(drv8323_TypeDef *drv, uint32_t drv_reg);
-void drv_write_reg(drv8323_TypeDef *drv, uint16_t reg);
-void drv_read_reg(drv8323_TypeDef *drv, uint16_t reg);
+void drv_write_reg(drv8323_TypeDef *drv, uint16_t reg, uint16_t data);
+uint16_t drv_read_reg(drv8323_TypeDef *drv, uint16_t reg);
 void drv_update(drv8323_TypeDef *drv);
 
 
