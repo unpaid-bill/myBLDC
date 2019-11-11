@@ -4,13 +4,38 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "make flash",
             "type": "shell",
-            "label": "arm-eabi-gcc make flash",
             "command": "make",
-            "args": ["flash"],
+            "args": [
+                "flash"
+            ],
             "problemMatcher": [
                 "$gcc"
+            ]
+        },
+        {
+            "label": "start swo output",
+            "type": "shell",
+            "command": "./open_swo.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop swo output",
+            "type": "shell",
+            "command": "./stop_swo.sh",
+            "problemMatcher": []
+        },
+        {
+            "type": "shell",
+            "label": "run",
+            "dependsOn": [
+                "stop swo output",
+                "make flash",
+                "start swo output"
             ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -28,7 +53,9 @@
             "type": "shell",
             "label": "make clean",
             "command": "make",
-            "args": ["clean"],
+            "args": [
+                "clean"
+            ],
             "problemMatcher": [
                 "$gcc"
             ]

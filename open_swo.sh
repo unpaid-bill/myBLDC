@@ -1,0 +1,2 @@
+#!/bin/bash
+openocd -f /home/jon/Downloads/openocd-0.10.0/tcl/interface/stlink-v2-1.cfg -f /home/jon/Downloads/openocd-0.10.0/tcl/target/stm32f1x.cfg -c "tpiu config internal itm.log uart off 64000000 2000000" & tail -f itm.log

@@ -12,17 +12,40 @@
             "configFiles": [
                 "/home/jon/Downloads/openocd-0.10.0/tcl/interface/stlink-v2-1.cfg",
                 "/home/jon/Downloads/openocd-0.10.0/tcl/target/stm32f1x.cfg"
-            ]
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "source": "probe",
+                "cpuFrequency": 64000000,
+                "swoFrequency": 2000000,
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console",
+                        "label": "SWO output",
+                        "encoding":"ascii"
+                    },
+                    {
+                        "port": 1,
+                        "type": "console",
+                        "label": "SWO1 output",
+                        "encoding":"ascii"
+                    }
+                ]
+            },
+            // "openOCDLaunchCommands": ["tpiu config internal itm.log uart off 64000000 2000000"]
         },
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "stutil",
+            "armToolchainPath": "/opt/gcc-arm-none-eabi-7-2017-q4-major/bin/",
             "cwd": "${workspaceRoot}",
-            "executable": "./build/motor_driver.elf",
+            "executable": "${workspaceRoot}/build/motor_driver.elf",
             "name": "Debug (ST-Util)",
             "device": "STM32F103C8",
-            "v1": false
+            "svdFile": "./STM32F103.svd",
+            "v1": false,
         }
     ]
 }
