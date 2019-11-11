@@ -27,6 +27,7 @@ void myDelay(uint32_t mS){
 }
 
 motor_TypeDef m;
+uint8_t update_flag = 0;
 
 int main(void)
 {   
@@ -70,8 +71,8 @@ int main(void)
     /* ------------ DMA setup ------------ */
     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
-    DMA1_Channel1->CMAR = (uint32_t)ADC_samples;
-    DMA1_Channel1->CNDTR = 5;
+    DMA1_Channel1->CMAR = (uint32_t)m.ADC_samples;
+    DMA1_Channel1->CNDTR = 6;
     DMA1_Channel1->CCR &= ~(DMA_CCR_PL_0 | DMA_CCR_PL_1);
     // DMA1_Channel1->CNDTR = (sizeof(ADC_samples)/sizeof(ADC_samples[0]));
     // memory icnrement
@@ -143,21 +144,11 @@ int main(void)
     rx = drv_read_reg(&m.drv, DRV_GATE_DRIVE_HS);
     printf("Gate Drive HS register\t");   print_reg(rx, 16);
     if (rx == 0){
-        error_handler();
+        error_handler(45);
     }
     printf("\n");
     
     TIM1_enable();
-
-
-    // uint32_t angle_a = 0;
-    // uint32_t angle_b = 120;
-    // uint32_t angle_c = 240;
-    // uint32_t max_duty_cycle = 7500;
-    // uint16_t duty_cycle_a;
-    // uint16_t duty_cycle_b;
-    // uint16_t duty_cycle_c;
-    // uint16_t angle_step = 30;
     
     watchdog_reload();
     printf("Interrupts enabled\n");
@@ -170,40 +161,39 @@ int main(void)
     uint16_t t_del = 10;
 
     printf("while(1)\n");
-    uint8_t fault = 0;
+    m.fault = 0;
+
+    /* ----------------------------- MAIN LOOP START -------------------------------- */
     while (1){
-        if(fault){
-            error_handler();
-        }
-        // myDelay(200);
-        // printf("beep..\n");
-        // fflush(stdout);
-        // ASENSE, BSENSE, CSENSE, A_CURR, B_CURR
-        // for(int i = 0; i < 4; i++){
-        //     printf("%d, ", ADC_samples[i]);
-        // }
-        // printf("%d\n", ADC_samples[4]);
-        
-        update_foc_params(&m);
-        motor_update(&m);
-
-        watchdog_reload();
         myDelay(t_del);
+
+        if(m.fault){
+            error_handler(m.fault);
+        }
+
+        if(update_flag){
+            printf("beep..\n");
+            
+            update_foc_params(&m);
+            motor_update(&m);
+
+            watchdog_reload();
+        }
     }
-
-
-
+    /* ------------------------------ MAIN LOOP END -------------------------------- */
 }
 
-
-void error_handler(void){
-    printf("error encountered!\n");
+void error_handler(uint8_t f){
+    printf("error code %d encountered!\n", f);
     while(1){
         pin_set(LED_FAULT_Port, LED_FAULT_Pin);
         myDelay(500);
         pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
         myDelay(500);
-        watchdog_reload();
+
+        if(f!=45){
+            watchdog_reload();
+        }
     }
 }
 

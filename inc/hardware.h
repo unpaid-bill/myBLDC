@@ -68,7 +68,7 @@ uint16_t ADC_samples[10];
 
 /* Function prototypes -------------------------------------------------------*/
 void blink_fault(void);
-void error_handler(void);
+void error_handler(uint8_t f);
 
 
 #endif /* __HARDWARE_H__ */

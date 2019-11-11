@@ -24,7 +24,24 @@ void motor_update(motor_TypeDef* m){
 }
 
 void update_foc_params(motor_TypeDef* m){
+
+    uint16_t current_a = m->ADC_samples[0];
+    uint16_t current_b = m->ADC_samples[1];
+    // uint16_t current_c = m->ADC_samples[2];
     
+    clarke_TypeDef clarke;
+    park_TypeDef park;
+
+    clarke = clarke_tf(current_a, current_b);
+    park = park_tf(clarke.alpha, clarke.beta, m->angle);
+
+    /*
+        park PID control update
+    */
+
+   printf("clarke:%ld, %ld, %d\n", clarke.alpha, clarke.beta, m->angle);
+   printf("Park:%ld, %ld\n", park.d, park.q);
+
     /*  calculate:
         
         duty_cycle_a
@@ -45,18 +62,19 @@ clarke_TypeDef clarke_tf(uint32_t a, uint32_t b){
     clarke_TypeDef result;
     // returns alpha, beta
 
-    // alpha = a
-    // beta = ((1/m.sqrt(3)) * (2*b + a))
+    result.alpha = a;
+    result.beta = ((1/sqrt(3)) * (2*b + a));
 
     return result;
 }
 
 park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){ 
     park_TypeDef result;
+    float theta;
     // returns d,q
     
-    // theta = m.radians(angle)
-    // d = ( m.cos(theta) * alpha) + (m.sin(theta) * beta)
-    // q = (-m.sin(theta) * alpha) + (m.cos(theta) * beta)
+    theta = angle* (PI / 180);
+    result.d = ( cos(theta) * alpha) + (sin(theta) * beta); // DATATYPES??!!
+    result.q = (-sin(theta) * alpha) + (cos(theta) * beta);
     return result;
 }

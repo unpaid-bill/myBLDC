@@ -3,17 +3,19 @@
 
 #include <stdint.h>
 #include "drv8323.h"
+#include "math.h"
 
 typedef struct
 {
-    uint16_t test_variable;
+    uint16_t angle;
     drv8323_TypeDef drv;
     TIM_TypeDef* tim;
-    uint16_t ADC_samples[5];
+    uint16_t ADC_samples[6];
     uint16_t target_speed;
     uint32_t duty_cycle_a;
     uint32_t duty_cycle_b;
     uint32_t duty_cycle_c;
+    uint8_t  fault;
     /* add FOC stuff here */
 } motor_TypeDef;
 
