@@ -99,6 +99,7 @@ C_INCLUDES =  \
 
 C_WARNINGS = \
 -Wall
+-Werror=Wimplicit
 
 
 # compile gcc flags
