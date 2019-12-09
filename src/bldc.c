@@ -1,13 +1,25 @@
 #include "bldc.h"
 
-void motor_init_drv(motor_TypeDef* m, SPI_TypeDef* spi, TIM_TypeDef* tim){
-    m->drv.spi = spi;
-    m->tim = tim;
-    drv8323_Init(&m->drv, m->drv.spi);
+static clarke_TypeDef clarke_tf(uint32_t a, uint32_t b); // returns alpha, beta
+static park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle); // returns d,q
+static void reverse_park_tf();
+static void reverse_clarke_tf();
+
+void motor_init_drv(motor_TypeDef* m){
+    drv8323_Init(&m->drv, m->spi);
+    pin_set(m->enable_port, m->enable_pin);
+    // motor enabled! ensure things aren't spinning yet?!
+    drv8323_update(&m->drv);
+    drv8323_enable_all_fault_reporting(&m->drv);
+    // sets drv to 3-PWM mode
+    drv8323_3pwm_mode(&m->drv);
+    /* 
+        sets OC_ADJ_SET to 24 (Vds = 1.043v)
+    */ 
 }
 
 void motor_update(motor_TypeDef* m){
-    drv_update(&m->drv);
+    drv8323_update(&m->drv);
     /* 
         read faults
     */
@@ -77,4 +89,9 @@ park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){
     result.d = ( cos(theta) * alpha) + (sin(theta) * beta); // DATATYPES??!!
     result.q = (-sin(theta) * alpha) + (cos(theta) * beta);
     return result;
+}
+
+void motor_enable(motor_TypeDef *m){
+    pin_set(m->enable_port, m->enable_pin);
+    // change this function to _actually_ enable the *motor* and not just turn on the chip?
 }

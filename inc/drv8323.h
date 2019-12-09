@@ -7,7 +7,7 @@
 typedef struct
 {
     uint16_t fault_status_1;
-    uint16_t VGS_status_2;
+    uint16_t fault_status_2;
     uint16_t driver_control;
     uint16_t gate_drive_HS;
     uint16_t gate_drive_LS;
@@ -16,10 +16,20 @@ typedef struct
     SPI_TypeDef *spi;
 } drv8323_TypeDef;
 
+typedef enum
+{
+    FAULT_CODE_NONE = 0,
+    FAULT_CODE_DRV,
+    FAULT_CODE_OVERVOLTAGE,
+    FAULT_CODE_UNDERVOLTAGE
+} drv_fault_TypeDef;
+
+
+
 
 /**************  Register Address Definitions  **************/
 #define DRV_FAULT_STATUS_1          (0x0U << 11)
-#define DRV_VGS_STATUS_2            (0x1U << 11)
+#define DRV_FAULT_STATUS_2          (0x1U << 11) // AKA VGS status 2
 #define DRV_DRIVER_CONTROL          (0x2U << 11)
 #define DRV_GATE_DRIVE_HS           (0x3U << 11)
 #define DRV_GATE_DRIVE_LS           (0x4U << 11)
@@ -63,6 +73,40 @@ typedef struct
 #define FS1_VDS_LC                     FS1_VDS_LC_Msk
 
 /*******  Bit definitions for VGS Status 2 register  *********/
+#define FS2_SA_OC_Pos		(10U)
+#define FS2_SA_OC_Msk		(0x1U << FS2_SA_OC_Pos)
+#define FS2_SA_OC			FS2_SA_OC_Msk
+#define FS2_SB_OC_Pos		(9U)
+#define FS2_SB_OC_Msk		(0x1U << FS2_SB_OC_Pos)
+#define FS2_SB_OC			FS2_SB_OC_Msk
+#define FS2_SC_OC_Pos		(8U)
+#define FS2_SC_OC_Msk		(0x1U << FS2_SC_OC_Pos)
+#define FS2_SC_OC			FS2_SC_OC_Msk
+#define FS2_OTW_Pos		    (7U)
+#define FS2_OTW_Msk		    (0x1U << FS2_OTW_Pos)
+#define FS2_OTW			    FS2_OTW_Msk
+#define FS2_CPUV_Pos		(6U)
+#define FS2_CPUV_Msk		(0x1U << FS2_CPUV_Pos)
+#define FS2_CPUV			FS2_CPUV_Msk
+#define FS2_VGS_HA_Pos		(5U)
+#define FS2_VGS_HA_Msk		(0x1U << FS2_VGS_HA_Pos)
+#define FS2_VGS_HA			FS2_VGS_HA_Msk
+#define FS2_VGS_LA_Pos		(4U)
+#define FS2_VGS_LA_Msk		(0x1U << FS2_VGS_LA_Pos)
+#define FS2_VGS_LA			FS2_VGS_LA_Msk
+#define FS2_VGS_HB_Pos		(3U)
+#define FS2_VGS_HB_Msk		(0x1U << FS2_VGS_HB_Pos)
+#define FS2_VGS_HB			FS2_VGS_HB_Msk
+#define FS2_VGS_LB_Pos		(2U)
+#define FS2_VGS_LB_Msk		(0x1U << FS2_VGS_LB_Pos)
+#define FS2_VGS_LB			FS2_VGS_LB_Msk
+#define FS2_VGS_HC_Pos		(1U)
+#define FS2_VGS_HC_Msk		(0x1U << FS2_VGS_HC_Pos)
+#define FS2_VGS_HC			FS2_VGS_HC_Msk
+#define FS2_VGS_LC_Pos		(0U)
+#define FS2_VGS_LC_Msk		(0x1U << FS2_VGS_LC_Pos)
+#define FS2_VGS_LC			FS2_VGS_LC_Msk
+
 
 /*******  Bit definitions for Driver Control register  *******/
 #define DRV_CTRL_DIS_CPUV_Pos          (9U)
@@ -329,11 +373,13 @@ typedef struct
 
 
 /**************  function prototypes  *****************/
-void drv8323_Init(drv8323_TypeDef *drv, SPI_TypeDef *spi);
-uint16_t drv_transceive(drv8323_TypeDef *drv, uint16_t tx_reg);
-void drv_write_reg(drv8323_TypeDef *drv, uint16_t reg, uint16_t data);
-uint16_t drv_read_reg(drv8323_TypeDef *drv, uint16_t reg);
-void drv_update(drv8323_TypeDef *drv);
+void     drv8323_Init(drv8323_TypeDef *drv, SPI_TypeDef *spi);
+void     drv8323_write_reg(drv8323_TypeDef *drv, uint16_t reg, uint16_t data);
+uint16_t drv8323_read_reg(drv8323_TypeDef *drv, uint16_t reg);
+drv_fault_TypeDef drv8323_update(drv8323_TypeDef *drv);
+drv_fault_TypeDef drv8323_check_faults(drv8323_TypeDef *drv);
+void     drv8323_enable_all_fault_reporting(drv8323_TypeDef *drv);
+void     drv8323_3pwm_mode(drv8323_TypeDef *drv);
 
 
 #endif // endif __DRV8323_H__

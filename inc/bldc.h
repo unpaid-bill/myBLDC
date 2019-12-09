@@ -9,8 +9,27 @@ typedef struct
 {
     uint16_t angle;
     drv8323_TypeDef drv;
+    SPI_TypeDef* spi;
     TIM_TypeDef* tim;
+    GPIO_TypeDef* enable_port;
+    GPIO_TypeDef* cal_port;
+    GPIO_TypeDef* nfault_port;
+    uint8_t  enable_pin;
+    uint8_t  cal_pin;
+    uint8_t  nfault_pin;
     uint16_t ADC_samples[6];
+    uint16_t ADC_voltage_A;
+    uint16_t ADC_voltage_B;
+    uint16_t ADC_voltage_C;
+    uint16_t ADC_current_A;
+    uint16_t ADC_current_B;
+    uint16_t ADC_current_C;
+    // float real_voltage_A;
+    // float real_voltage_B;
+    // float real_voltage_C;
+    // float real_current_A;
+    // float real_current_B;
+    // float real_current_C;
     uint16_t target_speed;
     uint32_t duty_cycle_a;
     uint32_t duty_cycle_b;
@@ -31,12 +50,9 @@ typedef struct
     uint32_t beta;
 } clarke_TypeDef;
 
-void motor_init_drv(motor_TypeDef* m, SPI_TypeDef* spi, TIM_TypeDef* tim);
+void motor_init_drv(motor_TypeDef* m);
 void motor_update(motor_TypeDef* m);
 void update_foc_params(motor_TypeDef* m);
-clarke_TypeDef clarke_tf(uint32_t a, uint32_t b); // returns alpha, beta
-park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle); // returns d,q
-void reverse_park_tf();
-void reverse_clarke_tf();
+void motor_enable(motor_TypeDef *m);
 
 #endif /* __BLDC_H__ */
