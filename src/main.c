@@ -26,6 +26,21 @@ void myDelay(uint32_t mS){
     while(myTicks<mS);
 }
 
+void enable_SWO(void){
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= (AFIO_MAPR_SWJ_CFG_1);
+    DBGMCU->CR |= DBGMCU_CR_TRACE_IOEN;
+    pin_mode(GPIOB, 3, GPIO_AF_PP);
+    /* Configure Trace Port Interface Unit */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // Enable access to registers
+    DWT->CTRL = 0x400003FE; // DWT needs to provide sync for ITM
+    ITM->LAR = 0xC5ACCE55; // Allow access to the Control Register
+    ITM->TPR = 0x0000000F; // Trace access privilege from user level code, please
+    ITM->TCR = 0x0001000D;
+    ITM->TER |= (1 << 0); // Only Enable stimulus port 0
+    ITM_SendChar('A');
+}
+
 motor_TypeDef m;
 uint8_t update_flag = 0;
 
@@ -34,20 +49,9 @@ int main(void)
     // SystemInit();
     // ITM_SendChar('A');
     SystemClock_Config();
-    // RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-    // AFIO->MAPR |= (AFIO_MAPR_SWJ_CFG_1);
-    // DBGMCU->CR |= DBGMCU_CR_TRACE_IOEN;
-    // pin_mode(GPIOB, 3, GPIO_AF_PP);
-    // /* Configure Trace Port Interface Unit */
-    // CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // Enable access to registers
-    // DWT->CTRL = 0x400003FE; // DWT needs to provide sync for ITM
-    // ITM->LAR = 0xC5ACCE55; // Allow access to the Control Register
-    // ITM->TPR = 0x0000000F; // Trace access privilege from user level code, please
-    // ITM->TCR = 0x0001000D;
-    // ITM->TER |= (1 << 0); // Only Enable stimulus port 0
-    // ITM_SendChar('A');
+    // enable_SWO();
 
-    assess_reset_condition();
+    assess_reset_condition(); // print any reset cause
 
     watchdog_set_prescaler(32);
     watchdog_set_reload_reg(0xfff);
@@ -104,15 +108,11 @@ int main(void)
         ;
     }
     ADC1->CR2 |= ADC_CR2_ADON;
-
-
     myDelay(10);
     // print_reg(ADC1->CR2, 32);
     printf("adc on and calibrated\n");
     /* --------- ADC end of setup -------- */
     myDelay(10);
-    myDelay(500);
-    
 
     TIM1_Init();    printf("tim1 initialized\n");
     printf("CAL set LOW (off)\n");
@@ -120,38 +120,52 @@ int main(void)
     // uint16_t tx;
     uint16_t rx;
 
-    // drv8323_TypeDef drv;
-    // drv8323_Init(&drv, SPI1); // assigns SPI1 peripheral to drv8323
-    motor_init_drv(&m, SPI1, TIM1);
-    // drv_update(&drv);
+    m.tim = TIM1;
+    m.spi = SPI1;
+    m.enable_pin  = ENABLE_Pin;
+    m.enable_port = ENABLE_Port;
+    m.cal_pin  = CAL_Pin;
+    m.cal_port = CAL_Port;
+    m.nfault_pin  = nFAULT_Pin;
+    m.nfault_port = nFAULT_Port;
+    motor_init_drv(&m);
+    printf("initialised motor\n");
 
-    // sets OC_ADJ_SET to 24 (Vds = 1.043v)
-    // Disable OCP
-    // sets drv to 3-PWM mode
-    // uint16_t set_reg = 0b01000000000 | 0b00000110000 | 0b00000001000;
-    // uint16_t set_reg = (CR1_OC_ADJ_SET_24 | CR1_OCP_MODE_DISABLED | CR1_PWM_MODE_3);
-    // uint16_t set_reg = (CR1_OC_ADJ_SET_7 | CR1_PWM_MODE_3);
-    pin_set(ENABLE_Port, ENABLE_Pin);
-    myDelay(100);
+    printf("printing addresses for:\n");
+    printf("ADC_Samples[0]: %p\n", &ADC_samples[0]);
+    printf("ADC_Samples[1]: %p\n", &ADC_samples[1]);
+    printf("ADC_Samples[2]: %p\n", &ADC_samples[2]);
+    printf("ADC_Samples[2]: %p\n", &ADC_samples[3]);
+    printf("ADC_Samples[2]: %p\n", &ADC_samples[4]);
+    printf("ADC_Samples[2]: %p\n", &ADC_samples[5]);
+
+    printf("m.ADC_voltage_A: %p\n", &m.ADC_voltage_A);
+    printf("m.ADC_voltage_B: %p\n", &m.ADC_voltage_B);
+    printf("m.ADC_voltage_C: %p\n", &m.ADC_voltage_C);
+    printf("m.ADC_current_A: %p\n", &m.ADC_current_A);
+    printf("m.ADC_current_B: %p\n", &m.ADC_current_B);
+    printf("m.ADC_current_C: %p\n", &m.ADC_current_C);
+
+    // myDelay(100);
     // drv_write(&drv, DRV_CTRL_1, set_reg);
-    printf("\nEnabled drv8323\n");
 
     transmit_uart(USART3, "test\n", 5);
 
-    myDelay(50);
+    // myDelay(50);
 
     printf("transmitting to drv\n");
-    rx = drv_read_reg(&m.drv, DRV_GATE_DRIVE_HS);
+    rx = drv8323_read_reg(&m.drv, DRV_GATE_DRIVE_HS);
     printf("Gate Drive HS register\t");   print_reg(rx, 16);
     if (rx == 0){
         error_handler(45);
     }
-    printf("\n");
+    printf("successful response\n");
     
     TIM1_enable();
+    // move into bldc.c!!
     
     watchdog_reload();
-    printf("Interrupts enabled\n");
+    // printf("Interrupts enabled\n");
     
     // NVIC_SetPriority(DMA1_Channel1_IRQn, 1);
     // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
