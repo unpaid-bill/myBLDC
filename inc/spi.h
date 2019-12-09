@@ -13,7 +13,6 @@
 void SPI_Init(SPI_TypeDef *spi);
 void SPI_Transfer(SPI_TypeDef *spi, uint16_t data);
 uint16_t SPI_Transcieve(SPI_TypeDef *spi, uint16_t TxData);
-// void print_reg(UART_HandleTypeDef *huart, uint32_t reg, uint8_t reg_sz);
 
 
 #endif // endif __SPI_H__
