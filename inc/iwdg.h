@@ -2,6 +2,7 @@
 #define __IWDG_H__
 
 #include "stm32f103xb.h"
+#include <stdio.h>
 
 #define IWDG_PR_DIV_4 0x0
 #define IWDG_PR_DIV_8 0x1

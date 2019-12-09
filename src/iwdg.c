@@ -4,6 +4,7 @@
 
 void watchdog_reload(void){
     IWDG->KR = 0xAAAA;
+    printf("watchdog reloaded\n");
 }
 
 void watchdog_start(void){
