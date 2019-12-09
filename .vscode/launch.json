@@ -29,10 +29,27 @@
                         "port": 1,
                         "type": "console",
                         "label": "SWO1 output",
-                        "encoding":"ascii"
+                        "encoding":"ascii",
                     }
                 ]
             },
+            "graphConfig": [
+                {
+                    "label": "graph test",
+                    "timespan": 30,
+                    "maximum": 65535,
+                    "minimum": 0,
+                    "annotate": true,
+                    "type": "realtime",
+                    "plots": [
+                        {
+                            "label": "SWO output",
+                            "graphId": "voltage",
+                            "color": "#000000"
+                        }
+                    ]
+                }
+            ],
             // "openOCDLaunchCommands": ["tpiu config internal itm.log uart off 64000000 2000000"]
         },
         {
