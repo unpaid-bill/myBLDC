@@ -1,11 +1,58 @@
 #include "bldc.h"
 
-static clarke_TypeDef clarke_tf(uint32_t a, uint32_t b); // returns alpha, beta
+static clarke_TypeDef clarke_tf(float a, float b); // returns alpha, beta
 static park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle); // returns d,q
-static void reverse_park_tf();
-static void reverse_clarke_tf();
+static clarke_TypeDef inverse_park_tf(park_TypeDef park, uint32_t theta);
+static phase_TypeDef inverse_clarke_tf(clarke_TypeDef clarke);
 
 void motor_init_drv(motor_TypeDef* m){
+    printf("initialising motor...\n");
+    SPI_Init(m->spi);   printf("SPI1 initialized\n");
+    TIM_Init(m->tim);   printf("tim1 initialized\n");
+    /* ------------ DMA setup ------------ */
+    RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+    DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
+    DMA1_Channel1->CMAR = (uint32_t)&(m->ADC_voltage_A);
+    DMA1_Channel1->CNDTR = 6;
+    DMA1_Channel1->CCR &= ~(DMA_CCR_PL_0 | DMA_CCR_PL_1);
+    // memory icnrement
+    // circular mode
+    // set peripheral and memory sizes to 16b
+    DMA1_Channel1->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC 
+                        | DMA_CCR_PSIZE_0 | DMA_CCR_MSIZE_0
+                        | DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_HTIE;
+    // DMA1_Channel1->CCR &= ~(DMA_CCR_HTIE);
+    DMA1_Channel1->CCR |= DMA_CCR_EN;
+    // enable
+    myDelay(500);
+    printf("DMA1 Channel1 initialised\n");
+    // DMA_Init(DMA1_Channel1, (uint32_t)&(ADC1->DR), (uint32_t)&m->ADC_voltage_A);
+    // myDelay(100);
+    // printf("DMA1 Channel1 initialised\n");
+    /* --------- DMA end of setup -------- */
+    
+    /* ------------ ADC setup ------------ */
+    ADC_Init(ADC1);    printf("ADC1 initialized\n");
+
+    ADC1->CR1 |= ADC_CR1_EOCIE;
+    ADC1->CR2 |= ADC_CR2_CONT;
+    ADC1->CR2 |= ADC_CR2_ADON;
+    myDelay(10);
+    ADC1->CR2 |= (ADC_CR2_RSTCAL);
+    ADC1->CR2 |= (ADC_CR2_CAL);
+    printf("adc on, calibrating...\n");
+    while((ADC1->CR2) & (ADC_CR2_CAL)){
+        // myDelay(1);
+        ;
+    }
+    ADC1->CR2 |= ADC_CR2_ADON;
+    myDelay(10);
+    // print_reg(ADC1->CR2, 32);
+    printf("adc on and calibrated\n");
+    // ADC_Init(ADC1);    printf("ADC1 initialized\n");
+
+    /* --------- ADC end of setup -------- */
+
     drv8323_Init(&m->drv, m->spi);
     pin_set(m->enable_port, m->enable_pin);
     // motor enabled! ensure things aren't spinning yet?!
@@ -16,6 +63,18 @@ void motor_init_drv(motor_TypeDef* m){
     /* 
         sets OC_ADJ_SET to 24 (Vds = 1.043v)
     */ 
+    m->initialised = 1;
+    printf("initialised motor\n");
+}
+
+void motor_enable(motor_TypeDef *m){
+    if((m->initialised) && (m->fault == 0)){
+        printf("enabling motor...\n");
+    } else {
+        printf("Error: attempting to enable motor before initialising!\n");
+    }
+    pin_set(m->enable_port, m->enable_pin);
+    // change this function to _actually_ enable the *motor* and not just turn on the chip?
 }
 
 void motor_update(motor_TypeDef* m){
@@ -37,12 +96,12 @@ void motor_update(motor_TypeDef* m){
 
 void update_foc_params(motor_TypeDef* m){
 
-    uint16_t current_a = m->ADC_samples[0];
-    uint16_t current_b = m->ADC_samples[1];
+    float current_a = m->real_current_A;
+    float current_b = m->real_current_B;
     // uint16_t current_c = m->ADC_samples[2];
     
-    clarke_TypeDef clarke;
-    park_TypeDef park;
+    clarke_TypeDef  clarke;
+    park_TypeDef    park;
 
     clarke = clarke_tf(current_a, current_b);
     park = park_tf(clarke.alpha, clarke.beta, m->angle);
@@ -51,8 +110,8 @@ void update_foc_params(motor_TypeDef* m){
         park PID control update
     */
 
-   printf("clarke:%ld, %ld, %d\n", clarke.alpha, clarke.beta, m->angle);
-   printf("Park:%ld, %ld\n", park.d, park.q);
+    printf("clarke:%f, %f, %d\n", clarke.alpha, clarke.beta, m->angle);
+    printf("Park:%f, %f\n", park.d, park.q);
 
     /*  calculate:
         
@@ -60,6 +119,20 @@ void update_foc_params(motor_TypeDef* m){
         duty_cycle_b
         duty_cycle_c
     */
+    park_TypeDef     i_park; // the one from the PID loop
+    clarke_TypeDef   i_clarke; 
+    phase_TypeDef    phase;
+ 
+    i_clarke = inverse_park_tf(i_park, m->angle);
+    phase = inverse_clarke_tf(i_clarke);
+
+    m->duty_cycle_a = phase.a;
+    m->duty_cycle_b = phase.b;
+    m->duty_cycle_c = phase.c;
+ 
+    printf("new park: d:%f, q:%f\n", i_park.d, i_park.q);
+    printf("new clarke: alpha:%f, beta:%f\n", i_clarke.alpha, i_clarke.beta);
+    printf("phase: A:%f, B:%f, C:%f\n", phase.a, phase.b, phase.c);
     // duty_cycle_a = ((sin(angle_a * (PI/180))+1)/2)*max_duty_cycle;
     // duty_cycle_b = ((sin(angle_b * (PI/180))+1)/2)*max_duty_cycle;
     // duty_cycle_c = ((sin(angle_c * (PI/180))+1)/2)*max_duty_cycle;
@@ -70,7 +143,30 @@ void update_foc_params(motor_TypeDef* m){
     // printf("%d, %d, %d, %d\n", (uint32_t)duty_cycle_a, (uint32_t)duty_cycle_b, (uint32_t)duty_cycle_c, angle_a);
 }
 
-clarke_TypeDef clarke_tf(uint32_t a, uint32_t b){
+float bldc_get_phase_voltage(motor_TypeDef *m, uint8_t index){
+    float duty_cycle = -1;
+    if (index > 2){
+        return duty_cycle;
+    }
+    switch (index)
+    {
+    case 0:
+        duty_cycle = (float)m->duty_cycle_a;
+        break;
+    case 1:
+        duty_cycle = (float)m->duty_cycle_a;
+        break;
+    case 2:
+        duty_cycle = (float)m->duty_cycle_a;
+        break;
+    default:
+        break;
+    }
+
+    return duty_cycle;
+}
+
+clarke_TypeDef clarke_tf(float a, float b){
     clarke_TypeDef result;
     // returns alpha, beta
 
@@ -81,6 +177,7 @@ clarke_TypeDef clarke_tf(uint32_t a, uint32_t b){
 }
 
 park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){ 
+    // #warning DATATYPES!!!!
     park_TypeDef result;
     float theta;
     // returns d,q
@@ -91,7 +188,27 @@ park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){
     return result;
 }
 
-void motor_enable(motor_TypeDef *m){
-    pin_set(m->enable_port, m->enable_pin);
-    // change this function to _actually_ enable the *motor* and not just turn on the chip?
+phase_TypeDef inverse_clarke_tf(clarke_TypeDef clarke){
+    // takes in alpha and beta, returns a,b,c phase values
+
+    // #warning DATATYPES!!!!
+    phase_TypeDef phase;
+
+    phase.a = clarke.alpha;
+    phase.b = (-clarke.alpha + sqrt(3)*clarke.beta)/2;
+    phase.c = (-clarke.alpha - sqrt(3)*clarke.beta)/2;
+
+    return phase;
+}
+
+clarke_TypeDef inverse_park_tf(park_TypeDef park, uint32_t theta){
+    // takes in d,q, angle, returns alpha & beta
+
+    // #warning DATATYPES!!!!
+    clarke_TypeDef clarke;
+
+    clarke.alpha = park.d*cos(theta) - park.q*sin(theta);
+    clarke.alpha = park.d*sin(theta) + park.q*cos(theta);
+
+    return clarke;
 }

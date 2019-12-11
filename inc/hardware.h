@@ -63,10 +63,10 @@
 
 /* Variable decleration ------------------------------------------------------*/
 volatile uint32_t myTicks;
-uint16_t ADC_samples[10];
 
 
 /* Function prototypes -------------------------------------------------------*/
+void myDelay(uint32_t mS);
 void blink_fault(void);
 void error_handler(uint8_t f);
 

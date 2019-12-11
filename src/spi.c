@@ -66,7 +66,7 @@ uint16_t SPI_Transcieve(SPI_TypeDef *spi, uint16_t TxData){
     // Write data to be transmitted to the SPI data register
 	spi->DR = TxData;
 
-    uint16_t timeout = 10000;
+    uint16_t timeout = 1000;
     while(!(spi->SR & SPI_SR_TXE)){
         if(timeout == 0){
             break;
@@ -74,7 +74,7 @@ uint16_t SPI_Transcieve(SPI_TypeDef *spi, uint16_t TxData){
         }
         timeout--;
     }
-    timeout = 10000;
+    timeout = 1000;
     while(!(spi->SR & SPI_SR_RXNE)){
         if(timeout == 0){
             break;
@@ -85,7 +85,7 @@ uint16_t SPI_Transcieve(SPI_TypeDef *spi, uint16_t TxData){
     
     RxData = spi->DR;
 
-    timeout = 10000;
+    timeout = 1000;
     while(!(spi->SR & SPI_SR_TXE)){
         if(timeout == 0){
             break;
@@ -93,7 +93,7 @@ uint16_t SPI_Transcieve(SPI_TypeDef *spi, uint16_t TxData){
         }
         timeout--;
     }
-    timeout = 10000;
+    timeout = 1000;
     while(!(spi->SR & SPI_SR_BSY)){
         if(timeout == 0){
             break;
