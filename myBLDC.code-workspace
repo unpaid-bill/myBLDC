@@ -13,7 +13,8 @@
 			"hardware.h": "c",
 			"uart.h": "c",
 			"stm32f103xb.h": "c",
-			"iwdg.h": "c"
+			"iwdg.h": "c",
+			"bldc.h": "c"
 		}
 	}
 }
