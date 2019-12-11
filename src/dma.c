@@ -2,6 +2,7 @@
 
 void DMA_Init(DMA_Channel_TypeDef *dma_channel, uint32_t cpar, uint32_t cmar){
     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+    myDelay(10);
     dma_channel->CPAR = cpar;
     dma_channel->CMAR = cmar;
     dma_channel->CNDTR = 6;

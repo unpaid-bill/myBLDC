@@ -71,47 +71,6 @@ int main(void)
     // NVIC_SetPriority(UsageFault_IRQn, 0);
     // NVIC_EnableIRQ(UsageFault_IRQn);
 
-    printf("ADC pointer: %ld\n",(uint32_t)&(ADC1->DR));
-    printf("struct pointer: %ld\n",(uint32_t)&(m.ADC_voltage_A));
-    /* ------------ DMA setup ------------ */
-    // RCC->AHBENR |= RCC_AHBENR_DMA1EN;
-    // DMA1_Channel1->CPAR = (uint32_t)&(ADC1->DR);
-    // DMA1_Channel1->CMAR = (uint32_t)&(m.ADC_voltage_A);
-    // DMA1_Channel1->CNDTR = 6;
-    // DMA1_Channel1->CCR &= ~(DMA_CCR_PL_0 | DMA_CCR_PL_1);
-    // // memory icnrement
-    // // circular mode
-    // // set peripheral and memory sizes to 16b
-    // DMA1_Channel1->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC 
-    //                     | DMA_CCR_PSIZE_0 | DMA_CCR_MSIZE_0
-    //                     | DMA_CCR_TEIE | DMA_CCR_TCIE | DMA_CCR_HTIE;
-    // // DMA1_Channel1->CCR &= ~(DMA_CCR_HTIE);
-    // DMA1_Channel1->CCR |= DMA_CCR_EN;
-    // // enable
-    // myDelay(500);
-    // printf("DMA1 Channel1 initialised\n");
-    /* --------- DMA end of setup -------- */
-    
-    /* ------------ ADC setup ------------ */
-    
-    // ADC_Init(ADC1);    printf("ADC1 initialized\n");
-
-    // ADC1->CR1 |= ADC_CR1_EOCIE;
-    // ADC1->CR2 |= ADC_CR2_CONT;
-    // ADC1->CR2 |= ADC_CR2_ADON;
-    // myDelay(10);
-    // ADC1->CR2 |= (ADC_CR2_RSTCAL);
-    // ADC1->CR2 |= (ADC_CR2_CAL);
-    // printf("adc on, calibrating...\n");
-    // while((ADC1->CR2) & (ADC_CR2_CAL)){
-    //     // myDelay(1);
-    //     ;
-    // }
-    // ADC1->CR2 |= ADC_CR2_ADON;
-    // myDelay(10);
-    // // print_reg(ADC1->CR2, 32);
-    // printf("adc on and calibrated\n");
-    /* --------- ADC end of setup -------- */
     myDelay(10);
 
     printf("CAL set LOW (off)\n");
@@ -166,7 +125,7 @@ int main(void)
 
     uint16_t t_del = 3000;
 
-    printf("while(1)\n");
+    printf(">> while(1)\n");
     m.fault = 0;
 
     /* ----------------------------- MAIN LOOP START -------------------------------- */
