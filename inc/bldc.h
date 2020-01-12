@@ -9,6 +9,11 @@
 #include "adc.h"
 #include "math.h"
 
+#define ONE_OVER_SQRT_THREE 0.5773502692f
+#define SQRT_THREE          1.732050808f
+
+#define PHASE_DIVIDER_RATIO 0.1f
+
 typedef struct
 {
     uint16_t angle;
@@ -60,10 +65,13 @@ typedef struct{
     float c;
 } phase_TypeDef;
 
-void motor_init_drv(motor_TypeDef* m);
-void motor_update(motor_TypeDef* m);
-void update_foc_params(motor_TypeDef* m);
-void motor_enable(motor_TypeDef *m);
+void  bldc_init_drv(motor_TypeDef* m);
+void  bldc_update(motor_TypeDef* m);
+void  bldc_update_foc_params(motor_TypeDef* m);
+void  bldc_enable(motor_TypeDef *m);
 float bldc_get_phase_voltage(motor_TypeDef *m, uint8_t index);
+void  bldc_PWM_OFF(motor_TypeDef *m);
+void  bldc_update_PWM(motor_TypeDef *m);
+void  bldc_calibrate(void);
 
 #endif /* __BLDC_H__ */

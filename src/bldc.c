@@ -5,7 +5,18 @@ static park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle); // r
 static clarke_TypeDef inverse_park_tf(park_TypeDef park, uint32_t theta);
 static phase_TypeDef inverse_clarke_tf(clarke_TypeDef clarke);
 
-void motor_init_drv(motor_TypeDef* m){
+/* move these somewhere? */
+    // printf("Interrupts enabled\n");
+
+    // NVIC_SetPriority(DMA1_Channel1_IRQn, 1);
+    // NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+    // NVIC_SetPriority(ADC1_IRQn, 2);
+    // NVIC_EnableIRQ(ADC1_IRQn);
+
+/*
+    initialises motor peripherals, configures gate driver and PWM
+*/
+void bldc_init_drv(motor_TypeDef* m){
     printf("initialising motor...\n");
     SPI_Init(m->spi);   printf("SPI1 initialized\n");
     TIM_Init(m->tim);   printf("tim1 initialized\n");
@@ -21,48 +32,68 @@ void motor_init_drv(motor_TypeDef* m){
     ADC_Init(ADC1);    printf("ADC1 initialized\n");
     /* --------- ADC end of setup -------- */
 
+    /* set PWM to OFF!! */
+    bldc_PWM_OFF(m);
     drv8323_Init(&m->drv, m->spi);
     pin_set(m->enable_port, m->enable_pin);
-    // motor enabled! ensure things aren't spinning yet?!
+    // motor enabled!
     drv8323_update(&m->drv);
     drv8323_enable_all_fault_reporting(&m->drv);
     // sets drv to 3-PWM mode
     drv8323_3pwm_mode(&m->drv);
     /* 
-        sets OC_ADJ_SET to 24 (Vds = 1.043v)
+        sets overcurrent VDS_LVL to ?? (Vds = ??) default is 0.75v. Leave there for now
     */ 
     m->initialised = 1;
     printf("initialised motor\n");
 }
 
-void motor_enable(motor_TypeDef *m){
+/*
+    Turns the motor ON (as in, ready and spinning)
+*/
+void bldc_enable(motor_TypeDef *m){
     if((m->initialised) && (m->fault == 0)){
         printf("enabling motor...\n");
     } else {
         printf("Error: attempting to enable motor before initialising!\n");
     }
+
+    TIM_enable(TIM1); // turn on timers
+
     pin_set(m->enable_port, m->enable_pin);
     // change this function to _actually_ enable the *motor* and not just turn on the chip?
 }
 
-void motor_update(motor_TypeDef* m){
+void bldc_update(motor_TypeDef* m){
     drv8323_update(&m->drv);
     /* 
         read faults
     */
-    /*
-        update timer with speed
-    */
-        m->tim->CCR1 = m->duty_cycle_a;
-        m->tim->CCR2 = m->duty_cycle_b;
-        m->tim->CCR3 = m->duty_cycle_c;
+
+    /*  update timer with speed */
+        bldc_update_PWM(m);
+
     /*
         x
     */
 
 }
 
-void update_foc_params(motor_TypeDef* m){
+void bldc_PWM_OFF(motor_TypeDef *m){
+    m->duty_cycle_a = 0;
+    m->duty_cycle_b = 0;
+    m->duty_cycle_c = 0;
+
+    bldc_update_PWM(m);
+}
+
+void bldc_update_PWM(motor_TypeDef *m){
+        m->tim->CCR1 = m->duty_cycle_a;
+        m->tim->CCR2 = m->duty_cycle_b;
+        m->tim->CCR3 = m->duty_cycle_c;
+}
+
+void bldc_update_foc_params(motor_TypeDef* m){
 
     float current_a = m->real_current_A;
     float current_b = m->real_current_B;
@@ -81,12 +112,7 @@ void update_foc_params(motor_TypeDef* m){
     printf("clarke:%f, %f, %d\n", clarke.alpha, clarke.beta, m->angle);
     printf("Park:%f, %f\n", park.d, park.q);
 
-    /*  calculate:
-        
-        duty_cycle_a
-        duty_cycle_b
-        duty_cycle_c
-    */
+    /*  calculate duty cycles   */
     park_TypeDef     i_park; // the one from the PID loop
     clarke_TypeDef   i_clarke; 
     phase_TypeDef    phase;
@@ -111,39 +137,58 @@ void update_foc_params(motor_TypeDef* m){
     // printf("%d, %d, %d, %d\n", (uint32_t)duty_cycle_a, (uint32_t)duty_cycle_b, (uint32_t)duty_cycle_c, angle_a);
 }
 
+/*
+Probably slow method to get real voltage from ADC sample
+*/
 float bldc_get_phase_voltage(motor_TypeDef *m, uint8_t index){
-    float duty_cycle = -1;
+    float voltage = -1;
     if (index > 2){
-        return duty_cycle;
+        return voltage;
     }
     switch (index)
     {
-    case 0:
-        duty_cycle = (float)m->duty_cycle_a;
+    case 0: // 1st phase - A
+        voltage = ((float)m->ADC_voltage_A/4096) * PHASE_DIVIDER_RATIO;
         break;
-    case 1:
-        duty_cycle = (float)m->duty_cycle_a;
+    case 1: // 2nd phase - B
+        voltage = ((float)m->ADC_voltage_B/4096) * PHASE_DIVIDER_RATIO;
         break;
-    case 2:
-        duty_cycle = (float)m->duty_cycle_a;
+    case 2: // 3rd phase - C
+        voltage = ((float)m->ADC_voltage_C/4096) * PHASE_DIVIDER_RATIO;
         break;
     default:
         break;
     }
 
-    return duty_cycle;
+    return voltage;
 }
 
+void bldc_angle_observer(motor_TypeDef *m){
+    /* use the following:... */
+    m->real_voltage_A;
+    m->real_voltage_B;
+    m->real_voltage_C;
+
+    /* and calculate: */
+    m->angle;
+}
+
+/*
+    clarke transform
+*/
 clarke_TypeDef clarke_tf(float a, float b){
     clarke_TypeDef result;
     // returns alpha, beta
 
     result.alpha = a;
-    result.beta = ((1/sqrt(3)) * (2*b + a));
+    result.beta = (ONE_OVER_SQRT_THREE * (2*b + a));
 
     return result;
 }
 
+/*
+    park transform
+*/
 park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){ 
     // #warning DATATYPES!!!!
     park_TypeDef result;
@@ -156,21 +201,27 @@ park_TypeDef park_tf(uint32_t alpha, uint32_t beta, uint32_t angle){
     return result;
 }
 
+/* 
+inverse clarke transform
+takes in alpha and beta, returns a,b,c phase values
+*/
 phase_TypeDef inverse_clarke_tf(clarke_TypeDef clarke){
-    // takes in alpha and beta, returns a,b,c phase values
 
     // #warning DATATYPES!!!!
     phase_TypeDef phase;
 
     phase.a = clarke.alpha;
-    phase.b = (-clarke.alpha + sqrt(3)*clarke.beta)/2;
-    phase.c = (-clarke.alpha - sqrt(3)*clarke.beta)/2;
+    phase.b = (-clarke.alpha + SQRT_THREE*clarke.beta)/2;
+    phase.c = (-clarke.alpha - SQRT_THREE*clarke.beta)/2;
 
     return phase;
 }
 
+/*
+inverse park transform
+takes in d,q, angle, returns alpha & beta
+*/
 clarke_TypeDef inverse_park_tf(park_TypeDef park, uint32_t theta){
-    // takes in d,q, angle, returns alpha & beta
 
     // #warning DATATYPES!!!!
     clarke_TypeDef clarke;
@@ -179,4 +230,40 @@ clarke_TypeDef inverse_park_tf(park_TypeDef park, uint32_t theta){
     clarke.alpha = park.d*sin(theta) + park.q*cos(theta);
 
     return clarke;
+}
+
+/*
+measures inductance of the overall motor
+*/
+// https://www.nxp.com/docs/en/application-note/AN4680.pdf
+void bldc_measure_inductance(void){
+    // needs to be spinning to run this measurement
+    // L =  V / (dI/dt)
+    //   = (V * dt) / dI
+
+    // measure current over a period of time to get the change (dI)
+    // count how long that change takes (dt)
+    // V is the input bus voltage
+    // I assume the inductance is that of the whole motor in that measurement period
+    ;
+}
+// https://www.nxp.com/docs/en/application-note/AN4680.pdf
+void bldc_measure_resistance(void){
+    // locks the current to specific value, by way of q_set
+
+    // R = V / I
+    
+    // measure input bus voltage
+    // measure current, both averaged
+
+}
+
+/*
+calculates motor's inductance and resistance
+*/
+void bldc_calibrate(void){
+    // https://www.nxp.com/docs/en/application-note/AN4680.pdf
+    bldc_measure_inductance();
+    bldc_measure_resistance();
+
 }
