@@ -2,12 +2,11 @@
 
 
 void ADC_Init(ADC_TypeDef* adc){
+    // APB2_CLK = 64MHz. ADC clock must be <=14MHz
+    // APB2_CLK / 6 = 10.667MHz
+    // APB2_CLK / 8 = 8MHz
     RCC->CFGR |= RCC_CFGR_ADCPRE_DIV8;
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-
-    // pin_mode(GPIOA, 1, GPIO_IN_AN);
-    // pin_mode(GPIOA, 2, GPIO_IN_AN);
-    // pin_mode(GPIOA, 3, GPIO_IN_AN);
 
     adc->SMPR2 |= (uint32_t)(0b111 << ADC_SMPR2_SMP1_Pos);
     adc->SMPR2 |= (uint32_t)(0b111 << ADC_SMPR2_SMP2_Pos);

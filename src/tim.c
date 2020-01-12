@@ -21,8 +21,8 @@ void TIM_Init(TIM_TypeDef* tim){
 void TIM_enable(TIM_TypeDef* tim){
     tim->CR1   |= TIM_CR1_CEN;   //        
     tim->CCER  |= TIM_CCER_CC1E 
-                 | TIM_CCER_CC2E 
-                 | TIM_CCER_CC3E; // 
+                | TIM_CCER_CC2E 
+                | TIM_CCER_CC3E; // 
     tim->BDTR  |= TIM_BDTR_MOE;  // Main Output Enabled
 }
 
