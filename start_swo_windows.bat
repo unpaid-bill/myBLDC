@@ -1,0 +1,1 @@
+C:\Users\Jon\Downloads\openocd-0.10.0\bin-x64\openocd.exe -f C:\Users/jon/Downloads/openocd-0.10.0/scripts/interface/stlink-v2-1.cfg -f C:\Users/jon/Downloads/openocd-0.10.0/scripts/target/stm32f1x.cfg -c "tpiu config internal itm.log uart off 64000000 2000000"

@@ -17,7 +17,7 @@
         {
             "label": "start swo output",
             "type": "shell",
-            "command": "./open_swo.sh",
+            "command": "./start_swo.sh",
             "problemMatcher": []
         },
         {
@@ -63,7 +63,7 @@
         {
             "type": "shell",
             "label": "make (rebuild)",
-            "dependsOn":[
+            "dependsOn": [
                 "make clean",
                 "make only"
             ],
@@ -71,6 +71,46 @@
             "problemMatcher": [
                 "$gcc"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "windows flash",
+            "type": "shell",
+            "command": "./windows_flash.bat",
+            "options": {
+                "shell": {
+                    "executable": "powershell.exe"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "start swo (windows)",
+            "type": "shell",
+            "command": "./start_swo_windows.bat",
+            "options": {
+                "shell": {
+                    "executable": "powershell.exe"
+                },
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "tail",
+            "type": "shell",
+            "command": "tail -f itm.log"
+        },
+        {
+            "label": "windows make flash",
+            "dependsOn": [
+                "make (rebuild)",
+                "windows flash"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true

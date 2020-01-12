@@ -1,0 +1,1 @@
+C:\Users\Jon\Downloads\stlink-1.3.0-win64\bin\st-flash.exe write .\build\motor_driver.bin 0x8000000
