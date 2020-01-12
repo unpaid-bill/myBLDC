@@ -36,7 +36,8 @@ src/drv8323.c \
 src/iwdg.c \
 src/hw_init.c \
 src/irq.c \
-src/bldc.c
+src/bldc.c \
+src/myPID.c
 
 # ASM sources
 ASM_SOURCES =  \
