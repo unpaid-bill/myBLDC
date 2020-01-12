@@ -5,6 +5,7 @@ Firmware for the myBLDC motor driver board.
 ## TODO
 - [ ] SPI driver refactoring needs testing
 - [x] replace ADC_SAMPLES[] with a struct and check memory addressing
+- [ ] write PID library
 - [ ] figure out if/where I need to use floats or Q_types 
     * currently using floats everywhere
 - [ ] implement fault codes for DRV
