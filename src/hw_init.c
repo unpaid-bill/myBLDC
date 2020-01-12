@@ -22,7 +22,14 @@ void GPIO_Init(void)
     pin_mode(INL_A_Port,   INL_A_Pin,   GPIO_AF_PP);        pin_reset(INL_A_Port, INL_A_Pin);
     pin_mode(INL_B_Port,   INL_B_Pin,   GPIO_AF_PP);        pin_reset(INL_B_Port, INL_B_Pin);
     pin_mode(INL_C_Port,   INL_C_Pin,   GPIO_AF_PP);        pin_reset(INL_C_Port, INL_C_Pin);
-    pin_mode(LED_FAULT_Port, LED_FAULT_Pin, GPIO_OUT_PP);   pin_reset(LED_FAULT_Port, LED_FAULT_Pin);
+    pin_mode(LED_R_Port,   LED_R_Pin,   GPIO_OUT_PP);       pin_reset(LED_R_Port, LED_R_Pin);
+    pin_mode(LED_G_Port,   LED_G_Pin,   GPIO_OUT_PP);       pin_reset(LED_G_Port, LED_G_Pin);
+    pin_mode(LED_B_Port,   LED_B_Pin,   GPIO_OUT_PP);       pin_reset(LED_B_Port, LED_B_Pin);
+
+    // LED Pin setup
+    pin_mode(LED_R_Port, LED_R_Pin, GPIO_OUT_PP);
+    pin_mode(LED_G_Port, LED_G_Pin, GPIO_OUT_PP);
+    pin_mode(LED_B_Port, LED_B_Pin, GPIO_OUT_PP);
 
     // SPI Pin setup
     pin_mode(SPI_PORT, SPI_Pin_NSS, GPIO_OUT_PP); // NSS
@@ -31,8 +38,8 @@ void GPIO_Init(void)
     pin_mode(SPI_PORT, SPI_Pin_MOSI, GPIO_AF_PP);  // MOSI
 
     // setup GPIO pins for USART1
-    pin_mode(USART3_PORT, USART_Pin_RX, GPIO_IN_FL); // RX PB7
-    pin_mode(USART3_PORT, USART_Pin_TX, GPIO_AF_PP); // TX PB6
+    pin_mode(USART_PORT, USART_Pin_RX, GPIO_IN_FL); // RX PB7
+    pin_mode(USART_PORT, USART_Pin_TX, GPIO_AF_PP); // TX PB6
 
     // setup GPIO pins for ADC1
     pin_mode(ASENSE_Port, ASENSE_Pin, GPIO_IN_AN);
