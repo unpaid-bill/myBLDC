@@ -113,7 +113,7 @@ void bldc_update_foc_params(motor_TypeDef* m){
     printf("Park:%f, %f\n", park.d, park.q);
 
     /*  calculate duty cycles   */
-    park_TypeDef     i_park; // the one from the PID loop
+    park_TypeDef     i_park = park; // the one from the PID loop
     clarke_TypeDef   i_clarke; 
     phase_TypeDef    phase;
  
@@ -138,31 +138,15 @@ void bldc_update_foc_params(motor_TypeDef* m){
 }
 
 /*
-Probably slow method to get real voltage from ADC sample
+Get real voltage from ADC sample
 */
-float bldc_get_phase_voltage(motor_TypeDef *m, uint8_t index){
-    float voltage = -1;
-    if (index > 2){
-        return voltage;
-    }
-    switch (index)
-    {
-    case 0: // 1st phase - A
-        voltage = ((float)m->ADC_voltage_A/4096) * PHASE_DIVIDER_RATIO;
-        break;
-    case 1: // 2nd phase - B
-        voltage = ((float)m->ADC_voltage_B/4096) * PHASE_DIVIDER_RATIO;
-        break;
-    case 2: // 3rd phase - C
-        voltage = ((float)m->ADC_voltage_C/4096) * PHASE_DIVIDER_RATIO;
-        break;
-    default:
-        break;
-    }
-
-    return voltage;
+float bldc_get_phase_voltage(uint16_t adc_in){
+    return ((float)adc_in/4096) * VDD_voltage / PHASE_DIVIDER_RATIO;
 }
 
+/* do some BEMF sensing and calculate angle (approx)
+    TODO: some zero crossing stuff
+*/
 void bldc_angle_observer(motor_TypeDef *m){
     /* use the following:... */
     m->real_voltage_A;

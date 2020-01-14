@@ -46,15 +46,10 @@ uint8_t update_flag = 0;
 int main(void)
 {   
     // SystemInit();
-    // ITM_SendChar('A');
     SystemClock_Config();
     // enable_SWO();
 
     assess_reset_condition(); // print any reset cause
-
-    watchdog_set_prescaler(32);
-    watchdog_set_reload_reg(0xfff);
-    watchdog_start();
 
     GPIO_Init();        printf("gpio initialized\n");
     UART_Init(USART3);  printf("uart initialized\n");        
@@ -72,6 +67,9 @@ int main(void)
     pin_reset(LED_B_Port,   LED_B_Pin);
     myDelay(100);
 
+    watchdog_set_prescaler(32);
+    watchdog_set_reload_reg(0xfff);
+    watchdog_start();
     // NVIC_SetPriority(HardFault_IRQn, 0);
     // NVIC_EnableIRQ(HardFault_IRQn);
     // NVIC_SetPriority(BusFault_IRQn, 0);
@@ -98,9 +96,9 @@ int main(void)
     /*---------- end setup motor ----------*/
 
     printf("reading ADC voltages:\n");
-    printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m, 0));
-    printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m, 1));
-    printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m, 2));
+    printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
+    printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
+    printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
 
     // don't think this is working yet
     transmit_uart(USART3, "test\n", 5);

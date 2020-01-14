@@ -12,7 +12,8 @@
 #define ONE_OVER_SQRT_THREE 0.5773502692f
 #define SQRT_THREE          1.732050808f
 
-#define PHASE_DIVIDER_RATIO 0.1f
+#define PHASE_DIVIDER_RATIO 0.1282051282f // 68K over 10K. 10/(10+68)
+float VDD_voltage = 3.30;
 
 typedef struct
 {
@@ -32,12 +33,6 @@ typedef struct
     uint16_t ADC_current_A;
     uint16_t ADC_current_B;
     uint16_t ADC_current_C;
-    float    real_voltage_A;
-    float    real_voltage_B;
-    float    real_voltage_C;
-    float    real_current_A;
-    float    real_current_B;
-    float    real_current_C;
     uint16_t target_speed;
     uint32_t duty_cycle_a;
     uint32_t duty_cycle_b;
@@ -69,7 +64,7 @@ void  bldc_init_drv(motor_TypeDef* m);
 void  bldc_update(motor_TypeDef* m);
 void  bldc_update_foc_params(motor_TypeDef* m);
 void  bldc_enable(motor_TypeDef *m);
-float bldc_get_phase_voltage(motor_TypeDef *m, uint8_t index);
+float bldc_get_phase_voltage(uint16_t adc_in);
 void  bldc_PWM_OFF(motor_TypeDef *m);
 void  bldc_update_PWM(motor_TypeDef *m);
 void  bldc_calibrate(void);
