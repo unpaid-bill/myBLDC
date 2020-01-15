@@ -18,6 +18,7 @@ static phase_TypeDef inverse_clarke_tf(clarke_TypeDef clarke);
 */
 void bldc_init_drv(motor_TypeDef* m){
     printf("initialising motor...\n");
+    m->fault = 0;
     SPI_Init(m->spi);   printf("SPI1 initialized\n");
     TIM_Init(m->tim);   printf("tim1 initialized\n");
     /* ------------ DMA setup ------------ */
@@ -39,6 +40,11 @@ void bldc_init_drv(motor_TypeDef* m){
     // motor enabled!
     drv8323_update(&m->drv);
     drv8323_enable_all_fault_reporting(&m->drv);
+    if (m->drv.gate_drive_HS != 0b0000001111111111){
+        printf("drv comms failed\n");
+        m->fault = 1;
+        return;
+    }
     // sets drv to 3-PWM mode
     drv8323_3pwm_mode(&m->drv);
     /* 
@@ -71,7 +77,13 @@ void bldc_update(motor_TypeDef* m){
     */
 
     /*  update timer with speed */
-        bldc_update_PWM(m);
+    if(m->foc){
+        bldc_update_foc_params(m);
+    } else {
+        bldc_update_openloop(m);
+    }
+
+    bldc_update_PWM(m);
 
     /*
         x
@@ -93,10 +105,55 @@ void bldc_update_PWM(motor_TypeDef *m){
         m->tim->CCR3 = m->duty_cycle_c;
 }
 
+void bldc_update_openloop(motor_TypeDef* m){
+    if (m->openloop_stage > 5){
+        m->openloop_stage = 0;
+    }
+
+    switch (m->openloop_stage)
+    {
+    case 0:
+        m->duty_cycle_a = m->target_speed;
+        m->duty_cycle_b = 0;
+        m->duty_cycle_c = 0;
+        break;
+    case 1:
+        m->duty_cycle_a = m->target_speed;
+        m->duty_cycle_b = m->target_speed;
+        m->duty_cycle_c = 0;
+        break;
+    case 2:
+        m->duty_cycle_a = 0;
+        m->duty_cycle_b = m->target_speed;
+        m->duty_cycle_c = 0;
+        break;
+    case 3:
+        m->duty_cycle_a = 0;
+        m->duty_cycle_b = m->target_speed;
+        m->duty_cycle_c = m->target_speed;
+        break;
+    case 4:
+        m->duty_cycle_a = 0;
+        m->duty_cycle_b = 0;
+        m->duty_cycle_c = m->target_speed;
+        break;
+    case 5:
+        m->duty_cycle_a = m->target_speed;
+        m->duty_cycle_b = 0;
+        m->duty_cycle_c = m->target_speed;
+        break;
+    
+    default:
+        break;
+    }
+
+    m->openloop_stage++;
+}
+
 void bldc_update_foc_params(motor_TypeDef* m){
 
-    float current_a = m->real_current_A;
-    float current_b = m->real_current_B;
+    float current_a = bldc_get_phase_current(m->ADC_current_A);
+    float current_b = bldc_get_phase_current(m->ADC_current_B);
     // uint16_t current_c = m->ADC_samples[2];
     
     clarke_TypeDef  clarke;
@@ -140,8 +197,16 @@ void bldc_update_foc_params(motor_TypeDef* m){
 /*
 Get real voltage from ADC sample
 */
-float bldc_get_phase_voltage(uint16_t adc_in){
-    return ((float)adc_in/4096) * VDD_voltage / PHASE_DIVIDER_RATIO;
+float bldc_get_phase_voltage(uint16_t v_adc_in){
+    return ((float)v_adc_in/4096) * VDD_voltage / PHASE_DIVIDER_RATIO;
+}
+
+float bldc_get_phase_current(uint16_t i_adc_in){
+    return ((float)i_adc_in/4096) * VDD_voltage / CURRENT_GAIN;
+}
+
+void bldc_set_target_speed(motor_TypeDef* m, uint16_t speed){
+    m->target_speed = speed;
 }
 
 /* do some BEMF sensing and calculate angle (approx)
@@ -149,9 +214,9 @@ float bldc_get_phase_voltage(uint16_t adc_in){
 */
 void bldc_angle_observer(motor_TypeDef *m){
     /* use the following:... */
-    m->real_voltage_A;
+    /*m->real_voltage_A;
     m->real_voltage_B;
-    m->real_voltage_C;
+    m->real_voltage_C;*/
 
     /* and calculate: */
     m->angle;
