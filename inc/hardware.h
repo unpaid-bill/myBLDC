@@ -3,6 +3,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
+// #include "gpio.h"
+// #include "spi.h"
 
 #ifndef STM32F103xB
     #define STM32F103xB
@@ -32,9 +34,9 @@
 #define INL_B_Port      GPIOB
 #define INL_C_Port      GPIOB
 /* LEDs Pin */
-#define LED_R_Pin       6     // A
-#define LED_G_Pin       5     // A
-#define LED_B_Pin       4     // A
+#define LED_R_Pin       6     // B
+#define LED_G_Pin       5     // B
+#define LED_B_Pin       4     // B
 #define LED_R_Port      GPIOB
 #define LED_G_Port      GPIOB
 #define LED_B_Port      GPIOB
@@ -62,6 +64,8 @@
 #define USART_PORT     GPIOB
 #define USART_Pin_TX    10
 #define USART_Pin_RX    11
+
+// GPIO_PortPin_TypeDef nFAULT_gpio = (GPIO_PortPin_TypeDef){.port=nFAULT_Port, .pin=nFAULT_Pin};
 
 
 /* Variable decleration ------------------------------------------------------*/

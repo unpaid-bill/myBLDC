@@ -3,7 +3,7 @@ Firmware for the myBLDC motor driver board.
 
 
 ## TODO
-- [ ] SPI driver refactoring needs testing
+- [x] SPI driver refactoring needs testing - UPDATE: it works!
 - [x] replace ADC_SAMPLES[] with a struct and check memory addressing
 - [ ] write PID library
 - [ ] figure out if/where I need to use floats or Q_types 
@@ -16,7 +16,6 @@ Firmware for the myBLDC motor driver board.
     * need to implement alligned sampling correctly
     * move ADC and DRM driver into own source files
 - [ ] Calculate back EMF
-    * maybe a helper function for converting an ADC reading to voltage?
 - [ ] test current sensing by logging and plotting current
 - [ ] angle observer (this is kind of a big thing...)
     * hinges on back EMF sensing
