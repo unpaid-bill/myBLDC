@@ -32,8 +32,8 @@ void GPIO_Init(void)
     pin_mode(LED_B_Port, LED_B_Pin, GPIO_OUT_PP);
 
     // SPI Pin setup
-    pin_mode(SPI_PORT, SPI_Pin_NSS, GPIO_OUT_PP); // NSS
-    pin_mode(SPI_PORT, SPI_Pin_SCK, GPIO_AF_PP);  // SCK,
+    pin_mode(SPI_PORT, SPI_Pin_NSS,  GPIO_OUT_PP); // NSS
+    pin_mode(SPI_PORT, SPI_Pin_SCK,  GPIO_AF_PP);  // SCK,
     pin_mode(SPI_PORT, SPI_Pin_MISO, GPIO_IN_FL);  // MISO
     pin_mode(SPI_PORT, SPI_Pin_MOSI, GPIO_AF_PP);  // MOSI
 
