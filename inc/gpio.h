@@ -14,6 +14,11 @@
 #define GPIO_PULLUP 0x01
 #define GPIO_PULLDN 0x00
 
+typedef struct{
+    GPIO_TypeDef port;
+    uint8_t pin;
+} GPIO_PortPin_TypeDef;
+
 void pin_mode(GPIO_TypeDef  *port_reg, uint8_t pin, uint8_t mode);
 void pin_speed(GPIO_TypeDef  *port_reg, uint8_t speed);
 void pin_pullmode(GPIO_TypeDef  *port_reg, uint8_t pin, uint8_t pull);

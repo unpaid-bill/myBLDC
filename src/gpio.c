@@ -5,7 +5,7 @@ void pin_mode(GPIO_TypeDef  *port_reg, uint8_t pin, uint8_t mode){
     uint32_t config;
     uint8_t  pin_offset;
     configreg = (pin < 8) ? &port_reg->CRL : &port_reg->CRH;
-    pin_offset = (pin < 8) ? pin : pin - 8;
+    pin_offset = (pin < 8) ? pin : pin - 8;  // pin_offset = pin % 8;
     config = 0xFFFFFFFF ^ ((0b1111) << (pin_offset * 4));
     *configreg &= config;
     *configreg |= mode << (pin_offset * 4);
