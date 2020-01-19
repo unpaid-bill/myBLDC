@@ -43,6 +43,12 @@ void enable_SWO(void){
 motor_TypeDef m;
 uint8_t update_flag = 0;
 
+void TIM4_IRQHandler(void){
+    // printf("TIM4 interrupt!\n");
+    update_flag = 1;
+    TIM4->SR &= ~TIM_SR_UIF;
+}
+
 int main(void)
 {   
     // SystemInit();
@@ -52,17 +58,19 @@ int main(void)
     assess_reset_condition(); // print any reset cause
 
     GPIO_Init();        printf("gpio initialized\n");
-    UART_Init(USART3);  printf("uart initialized\n");        
+    UART_Init(USART3);  printf("uart initialized\n");
+    TIM_Init(TIM4);        
+    NVIC_EnableIRQ(TIM4_IRQn);
     
     pin_set(LED_R_Port,   LED_R_Pin);
     myDelay(100);
-    pin_reset(LED_R_Port,   LED_R_Pin);
-    myDelay(100);
     pin_set(LED_G_Port,   LED_G_Pin);
     myDelay(100);
-    pin_reset(LED_G_Port,   LED_G_Pin);
-    myDelay(100);
     pin_set(LED_B_Port,   LED_B_Pin);
+    myDelay(100);
+    pin_reset(LED_R_Port,   LED_R_Pin);
+    myDelay(100);
+    pin_reset(LED_G_Port,   LED_G_Pin);
     myDelay(100);
     pin_reset(LED_B_Port,   LED_B_Pin);
     myDelay(100);
@@ -92,25 +100,22 @@ int main(void)
     m.nfault_pin  = nFAULT_Pin;
     m.nfault_port = nFAULT_Port;
     m.initialised = 0;
+    m.foc = 0;
     bldc_init_drv(&m);
     /*---------- end setup motor ----------*/
 
     printf("reading ADC voltages:\n");
-    printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
-    printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
-    printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
+    // printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
+    // printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
+    // printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
 
     // don't think this is working yet
     transmit_uart(USART3, "test\n", 5);
 
     /* ---------- test DRV connection ---------- */
-    uint16_t rx;
-    printf("transmitting to drv\n");
-    rx = drv8323_read_reg(&m.drv, DRV_GATE_DRIVE_HS);
-    printf("Gate Drive HS register\t");   print_reg(rx, 16);
-    if (rx != 0b01000000){
-        printf("drv comms failed\n");
-        error_handler(45);
+    if (m.fault){
+        printf("bldc encountered error code %d\n", m.fault);
+        error_handler(m.fault);
     }
     printf("successful response\n");
     /* ---------- end test DRV connection ---------- */
@@ -122,34 +127,42 @@ int main(void)
     watchdog_reload();
 
     // ---------- setup main loop ---------- */
-    uint16_t t_del = 3000;
+    // uint16_t t_del = 3000;
     m.fault = 0;
     printf(">> while(1)\n");
     // -------- end setup main loop -------- */
 
     /* ----------------------------- MAIN LOOP START -------------------------------- */
+
+    bldc_set_target_speed(&m, 300);
+    TIM_enable(TIM4);
+
     while (1){
-        myDelay(t_del);
-        
-        printf("m.ADC_voltage_A: %d\n", m.ADC_voltage_A);
-        printf("m.ADC_voltage_B: %d\n", m.ADC_voltage_B);
-        printf("m.ADC_voltage_C: %d\n", m.ADC_voltage_C);
-        printf("m.ADC_current_A: %d\n", m.ADC_current_A);
-        printf("m.ADC_current_B: %d\n", m.ADC_current_B);
-        printf("m.ADC_current_C: %d\n", m.ADC_current_C);
+        // myDelay(t_del);
+
+        // printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
+        // printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
+        // printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
+        // printf("m.ADC_current_A: %d\n", m.ADC_current_A);
+        // printf("m.ADC_current_B: %d\n", m.ADC_current_B);
+        // printf("m.ADC_current_C: %d\n", m.ADC_current_C);
 
         if(m.fault){
             error_handler(m.fault);
         }
 
         if(update_flag){
-            printf("beep..\n");
-            
-            bldc_update_foc_params(&m);
+            pin_set(LED_R_Port, LED_R_Pin);
+            pin_reset(LED_R_Port, LED_R_Pin); // timing pulse for probing
+
+            // printf("beep..\n");
             bldc_update(&m);
 
             watchdog_reload();
+
+            update_flag = 0;
         }
+
     }
     /* ------------------------------ MAIN LOOP END -------------------------------- */
 }
@@ -159,12 +172,9 @@ void error_handler(uint8_t f){
     printf("error code %d encountered!\n", f);
     while(1){
         blink_fault();
-        watchdog_reload();
+        // watchdog_reload();
 
-        if(f!=45){
-            printf("%d != %d\n", f, 45);
-            watchdog_reload();
-        } else {
+        if(f==45){
             printf(".");
         }
     }
@@ -172,13 +182,13 @@ void error_handler(uint8_t f){
 
 void blink_fault(void){
     for(int i = 0; i < 2; i++){
-        // pin_set(LED_R_Port,   LED_R_Pin);
+        pin_set(LED_R_Port,   LED_R_Pin);
         // pin_set(LED_G_Port,   LED_G_Pin);
-        pin_set(LED_B_Port,   LED_B_Pin);
+        // pin_set(LED_B_Port,   LED_B_Pin);
         myDelay(300);
-        // pin_reset(LED_R_Port,   LED_R_Pin);
+        pin_reset(LED_R_Port,   LED_R_Pin);
         // pin_reset(LED_G_Port,   LED_G_Pin);
-        pin_reset(LED_B_Port,   LED_B_Pin);
+        // pin_reset(LED_B_Port,   LED_B_Pin);
         myDelay(300);
     }
 }

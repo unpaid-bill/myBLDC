@@ -1,5 +1,8 @@
 #include "tim.h"
 
+/*
+    TODO: add separate init functions for Init_PWM and other modes
+*/
 void TIM_Init(TIM_TypeDef* tim){
     if(tim == TIM1){
         RCC->APB2ENR |= RCC_APB2ENR_TIM1EN; // enable Tim1 clock
@@ -21,7 +24,8 @@ void TIM_Init(TIM_TypeDef* tim){
         printf("SETUP TIMER! (TIM4!) - THIS TIMER IS UNTESTED\n");
         RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
         tim->PSC = 4; // frequency = 64MHz / (PSC+1) = 64/5 = 12.80MHs
-        tim->ARR = 65535; // period = 1/(frequency / ARR) = 1/(12.8MHz / 35535) = 5.12mS
+        tim->ARR = 65535; // period = 1/(frequency / ARR) = 1/(12.8MHz / 65535) = 5.12mS
+        tim->DIER |= TIM_DIER_UIE;
     } else {
         printf("ATTEMPTING TO SETUP TIMER THAT DOESN'T EXIST!\n");        
     }
