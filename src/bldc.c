@@ -154,7 +154,7 @@ void bldc_update_foc_params(motor_TypeDef* m){
 
     float current_a = bldc_get_phase_current(m->ADC_current_A);
     float current_b = bldc_get_phase_current(m->ADC_current_B);
-    // uint16_t current_c = m->ADC_samples[2];
+    // float current_c = bldc_get_phase_current(m->ADC_current_C);
     
     clarke_TypeDef  clarke;
     park_TypeDef    park;
