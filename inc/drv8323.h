@@ -57,8 +57,8 @@ typedef enum
 #define FS1_VDS_HA_Msk                 (0x1U << FS1_VDS_HA_Pos)
 #define FS1_VDS_HA                     FS1_VDS_HA_Msk
 #define FS1_VDS_LA_Pos                 (4U)
-#define FS1_VDS_LA_Msk                 (0x1U << FS1_VDA_LA_Pos)
-#define FS1_VDS_LA                     FS1_VDA_LA_Msk
+#define FS1_VDS_LA_Msk                 (0x1U << FS1_VDS_LA_Pos)
+#define FS1_VDS_LA                     FS1_VDS_LA_Msk
 #define FS1_VDS_HB_Pos                 (3U)
 #define FS1_VDS_HB_Msk                 (0x1U << FS1_VDS_HB_Pos)
 #define FS1_VDS_HB                     FS1_VDS_HB_Msk
