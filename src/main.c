@@ -137,6 +137,10 @@ int main(void)
     bldc_set_target_speed(&m, 300);
     TIM_enable(TIM4);
 
+    if(!pin_read(nFAULT_Port, nFAULT_Pin)){
+        printf("FAULT PIN TRIGGERED\n");
+    }
+
     while (1){
         // myDelay(t_del);
 
