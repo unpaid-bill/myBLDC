@@ -194,6 +194,21 @@ void bldc_update_foc_params(motor_TypeDef* m){
     // printf("%d, %d, %d, %d\n", (uint32_t)duty_cycle_a, (uint32_t)duty_cycle_b, (uint32_t)duty_cycle_c, angle_a);
 }
 
+void bldc_update_sine_mode(motor_TypeDef* m){
+    /*
+        take angle, get equiv sine value
+        give each duty cycle equivalent values
+
+        a_angle = angle
+        b_angle = (angle + 120) % 360
+        c_angle = (angle + 240) % 360
+
+        m->duty_cycle_a = sin_table[a_angle]
+        m->duty_cycle_b = sin_table[b_angle]
+        m->duty_cycle_c = sin_table[C_angle]
+    */
+}
+
 /*
 Get real voltage from ADC sample
 */

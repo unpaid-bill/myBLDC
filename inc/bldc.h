@@ -67,6 +67,7 @@ void  bldc_init_drv(motor_TypeDef* m);
 void  bldc_update(motor_TypeDef* m);
 void  bldc_update_openloop(motor_TypeDef* m);
 void  bldc_update_foc_params(motor_TypeDef* m);
+void  bldc_update_sine_mode(motor_TypeDef* m);
 void  bldc_enable(motor_TypeDef *m);
 float bldc_get_phase_voltage(uint16_t adc_in);
 float bldc_get_phase_current(uint16_t adc_in);
