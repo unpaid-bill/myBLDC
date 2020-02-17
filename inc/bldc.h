@@ -8,17 +8,22 @@
 #include "dma.h"
 #include "adc.h"
 #include "math.h"
+#include "myPID.h"
 
 #define ONE_OVER_SQRT_THREE 0.5773502692f
 #define SQRT_THREE          1.732050808f
 
 #define PHASE_DIVIDER_RATIO 0.1282051282f // 68K over 10K. 10/(10+68)
 #define CURRENT_GAIN        10.0f
-static float VDD_voltage = 3.30;
+#define VDD_voltage         3.30f
 
 typedef struct
 {
+    uint32_t now_t;
+    uint32_t lastrun_t;
     uint16_t angle;
+    uint16_t last_angle;
+    double velocity;
     drv8323_TypeDef drv;
     SPI_TypeDef* spi;
     TIM_TypeDef* tim;
@@ -35,14 +40,22 @@ typedef struct
     uint16_t ADC_current_B;
     uint16_t ADC_current_C;
     uint16_t target_speed;
+    uint32_t max_duty_cycle;
     uint32_t duty_cycle_a;
     uint32_t duty_cycle_b;
     uint32_t duty_cycle_c;
     uint8_t  fault;
     uint8_t  initialised;
-    uint8_t  foc;
     uint8_t  openloop_stage;
+    uint8_t  use_encoder;
     /* add FOC stuff here */
+    uint8_t  use_foc;
+    uint8_t  use_SVPWM;
+
+    uint32_t    q_set;
+    uint32_t    d_set;
+    pid_TypeDef q_pid;
+    pid_TypeDef d_pid;
 } motor_TypeDef;
 
 typedef struct
@@ -71,9 +84,14 @@ void  bldc_update_sine_mode(motor_TypeDef* m);
 void  bldc_enable(motor_TypeDef *m);
 float bldc_get_phase_voltage(uint16_t adc_in);
 float bldc_get_phase_current(uint16_t adc_in);
-void bldc_set_target_speed(motor_TypeDef* m, uint16_t speed);
+void  bldc_set_target_speed(motor_TypeDef* m, uint16_t speed);
+void  bldc_set_target_torque(motor_TypeDef *m, uint16_t q, uint16_t d);
 void  bldc_PWM_OFF(motor_TypeDef *m);
 void  bldc_update_PWM(motor_TypeDef *m);
-void  bldc_calibrate(void);
+void bldc_calibrate(motor_TypeDef *m);
+phase_TypeDef bldc_svpwm(clarke_TypeDef input);
+
+void bldc_measure_resistance(motor_TypeDef *m);
+void bldc_measure_inductance(motor_TypeDef *m);
 
 #endif /* __BLDC_H__ */

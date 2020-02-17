@@ -56,7 +56,7 @@ drv_fault_TypeDef drv8323_check_faults(drv8323_TypeDef *drv){
 
     // don't need to worry about performance of an if/else ladder
     // as if an error has occured, the motor shouldn't be running
-    drv_fault_TypeDef return_fault;
+    drv_fault_TypeDef return_fault = (fs1 | fs2);
     if(fs1 & FS1_VDS_OCP){
         printf("VDS Over Current Protection Error!\n");
     }
@@ -121,7 +121,7 @@ drv_fault_TypeDef drv8323_check_faults(drv8323_TypeDef *drv){
         printf("VDS LC error\n");
     }
 
-    return (fs1 || fs2); // implement properly!
+    return return_fault; // implement properly!
 }
 
 void     drv8323_3pwm_mode(drv8323_TypeDef *drv){

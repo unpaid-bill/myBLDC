@@ -58,7 +58,7 @@ int main(void)
     assess_reset_condition(); // print any reset cause
 
     GPIO_Init();        printf("gpio initialized\n");
-    UART_Init(USART3);  printf("uart initialized\n");
+    // UART_Init(USART3);  printf("uart initialized\n");
     TIM_Init(TIM4);        
     NVIC_EnableIRQ(TIM4_IRQn);
     
@@ -100,66 +100,49 @@ int main(void)
     m.nfault_pin  = nFAULT_Pin;
     m.nfault_port = nFAULT_Port;
     m.initialised = 0;
-    m.foc = 0;
+    m.use_encoder = 1;
+    m.use_foc   = 1;
+    m.use_SVPWM = 1;
     bldc_init_drv(&m);
     /*---------- end setup motor ----------*/
 
-    printf("reading ADC voltages:\n");
-    // printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
-    // printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
-    // printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
-
-    // don't think this is working yet
-    transmit_uart(USART3, "test\n", 5);
-
-    /* ---------- test DRV connection ---------- */
     if (m.fault){
         printf("bldc encountered error code %d\n", m.fault);
         error_handler(m.fault);
     }
     printf("successful response\n");
-    /* ---------- end test DRV connection ---------- */
 
-    /* ---------- enable motor ---------- */
+    bldc_calibrate(&m);
     bldc_enable(&m);
-    /* -------- end enable motor -------- */
         
     watchdog_reload();
 
     // ---------- setup main loop ---------- */
     // uint16_t t_del = 3000;
-    m.fault = 0;
-    printf(">> while(1)\n");
     // -------- end setup main loop -------- */
 
     /* ----------------------------- MAIN LOOP START -------------------------------- */
 
     bldc_set_target_speed(&m, 300);
-    TIM_enable(TIM4);
+    TIM_enable(TIM4); // main loop trigger
 
     if(!pin_read(nFAULT_Port, nFAULT_Pin)){
         printf("FAULT PIN TRIGGERED\n");
+        bldc_update(&m);
+        while(1){
+            ;;
+        }
     }
 
+    printf(">> while(1)\n");
+    bldc_set_target_torque(&m, 100, 0);
     while (1){
-        // myDelay(t_del);
-
-        // printf("m.ADC_voltage_A: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_A));
-        // printf("m.ADC_voltage_B: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_B));
-        // printf("m.ADC_voltage_C: %f\n", bldc_get_phase_voltage(&m.ADC_voltage_C));
-        // printf("m.ADC_current_A: %d\n", m.ADC_current_A);
-        // printf("m.ADC_current_B: %d\n", m.ADC_current_B);
-        // printf("m.ADC_current_C: %d\n", m.ADC_current_C);
 
         if(m.fault){
             error_handler(m.fault);
         }
 
-        if(update_flag){
-            pin_set(LED_R_Port, LED_R_Pin);
-            pin_reset(LED_R_Port, LED_R_Pin); // timing pulse for probing
-
-            // printf("beep..\n");
+        if(update_flag){ // flag set every 5.12mS (~195Hz) by TIM4
             bldc_update(&m);
 
             watchdog_reload();
