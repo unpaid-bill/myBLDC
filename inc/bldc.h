@@ -56,6 +56,12 @@ typedef struct
     uint32_t    d_set;
     pid_TypeDef q_pid;
     pid_TypeDef d_pid;
+    /* positiion control */
+    pid_TypeDef pos_pid;
+    uint32_t    pos_set;
+    /* velocity control */
+    pid_TypeDef vel_pid;
+    uint32_t    vel_set;
 } motor_TypeDef;
 
 typedef struct
@@ -90,6 +96,8 @@ void  bldc_PWM_OFF(motor_TypeDef *m);
 void  bldc_update_PWM(motor_TypeDef *m);
 void bldc_calibrate(motor_TypeDef *m);
 phase_TypeDef bldc_svpwm(clarke_TypeDef input);
+void bldc_angle_update(motor_TypeDef *m);
+void bldc_angle_observer(motor_TypeDef *m);
 
 void bldc_measure_resistance(motor_TypeDef *m);
 void bldc_measure_inductance(motor_TypeDef *m);

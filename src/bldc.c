@@ -36,9 +36,16 @@ void bldc_init_drv(motor_TypeDef* m){
 
     /* --------- encoder setup --------- */
     if(m->use_encoder){
+        // make Encoder an object?
+
         // setup TIM3
+        TIM_Init(TIM3);  printf("TIM3 initialised\n");
         // setup DMA to put into angle variable
+        cpar = 0;
+        cmar = 0;
+        DMA_Init(DMA1_Channel2, cpar, cmar); // Check this function!!!!
         // setup external interrupt on zero pin
+            // view 10.2.4 in refermence manual for details
         printf("initialised encoder???\n");
     }
     /* ----- end of encoder setup ------ */
@@ -86,10 +93,11 @@ void bldc_enable(motor_TypeDef *m){
 
     pin_set(m->enable_port, m->enable_pin);
     // change this function to _actually_ enable the *motor* and not just turn on the chip?
+    bldc_PWM_OFF(m);
 }
 
 void bldc_update(motor_TypeDef* m){
-    m->now_t = SysTick;
+    m->now_t = SysTick->VAL;
     drv8323_update(&m->drv);
     /* 
         read faults
@@ -97,6 +105,11 @@ void bldc_update(motor_TypeDef* m){
 
    /* update angle position */
     bldc_angle_update(m);
+
+    /* Back EMF measurement */
+    // bldc_get_phase_voltage(&m->ADC_voltage_A);
+    // bldc_get_phase_voltage(&m->ADC_voltage_b);
+    // bldc_get_phase_voltage(&m->ADC_voltage_C);
 
 
     /*  update timer with speed */
@@ -296,7 +309,8 @@ void bldc_set_target_torque(motor_TypeDef *m, uint16_t q, uint16_t d){
 void bldc_angle_update(motor_TypeDef *m){
     if(m->use_encoder){
         // encoder code
-        // update m->angle;
+        // update m->angle
+        // convert encoder count to angle (degrees)
     } else {
         bldc_angle_observer(m);
     }
@@ -315,6 +329,20 @@ void bldc_angle_observer(motor_TypeDef *m){
 
     /* and calculate: */
     m->angle = 0;
+}
+
+void bldc_velocity_observer(motor_TypeDef *m){
+    /* 
+        takes either the time between full rotations (if going fast enough) 
+        OR
+        change in angle per unit time
+        to get a hopefully accurate velocity value
+    */
+
+    /*
+        run this every ~0.5-1.0 second (unless doing velocity control????)
+        use the RTC interrupt to trigger this timing.
+    */
 }
 
 /*
