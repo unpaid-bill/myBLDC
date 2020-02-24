@@ -144,26 +144,31 @@ vpath %.c $(sort $(dir $(C_SOURCES)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
+# compile all .c files
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
 	@echo "[CC]	$(notdir $<)"
 	$Q$(CC) -c $(CFLAGS) $< -o $@
 
+# compile all .s files
 $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
 	@echo "[AS]	$(notdir $<)"
 	$Q$(AS) -c $(CFLAGS) $< -o $@
 
+# link all to make .elf
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
 	@echo "[LD]	$(TARGET).elf"
 	$Q$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 	@echo "[OBJDUMP]	$(TARGET).lst"
-	$(OBJDUMP) -St $(BUILD_DIR)/$(TARGET).elf >$(BUILD_DIR)/$(TARGET).lst
+	@$(OBJDUMP) -St $(BUILD_DIR)/$(TARGET).elf >$(BUILD_DIR)/$(TARGET).lst
 	@echo "[SZ]	$(TARGET).elf:"
-	$(SZ) $@
+	$Q$(SZ) $@
 
+# .elf to .hex
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	@echo "[OBJCOPY]	$(TARGET).hex"
 	$Q$(HEX) $< $@
 
+# .elf to .bin
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	@echo "[OBJCOPY]	$(TARGET).bin"
 	$Q$(BIN) $< $@

@@ -40,7 +40,7 @@ void enable_SWO(void){
     ITM_SendChar('A');
 }
 
-motor_TypeDef m;
+motor_TypeDef m; // primary BLDC object 
 uint8_t update_flag = 0;
 
 void TIM4_IRQHandler(void){
@@ -57,6 +57,8 @@ int main(void)
 
     assess_reset_condition(); // print any reset cause
 
+    printf("%s:%d Debug Print Test\n", __FILE__, __LINE__);
+    
     GPIO_Init();        printf("gpio initialized\n");
     // UART_Init(USART3);  printf("uart initialized\n");
     TIM_Init(TIM4);        
@@ -91,18 +93,19 @@ int main(void)
     myDelay(10);
 
     /*---------- setup motor ----------*/
-    m.tim = TIM1;
-    m.spi = SPI1;
+    m.tim         = TIM1;
+    m.spi         = SPI1;
     m.enable_pin  = ENABLE_Pin;
     m.enable_port = ENABLE_Port;
-    m.cal_pin  = CAL_Pin;
-    m.cal_port = CAL_Port;
+    m.cal_pin     = CAL_Pin;
+    m.cal_port    = CAL_Port;
     m.nfault_pin  = nFAULT_Pin;
     m.nfault_port = nFAULT_Port;
     m.initialised = 0;
     m.use_encoder = 1;
-    m.use_foc   = 1;
-    m.use_SVPWM = 1;
+    m.use_foc     = 1;
+    m.use_SVPWM   = 1;
+    m.control_mode = TORQUE_CTRL;
     bldc_init_drv(&m);
     /*---------- end setup motor ----------*/
 
@@ -117,13 +120,8 @@ int main(void)
         
     watchdog_reload();
 
-    // ---------- setup main loop ---------- */
-    // uint16_t t_del = 3000;
-    // -------- end setup main loop -------- */
-
     /* ----------------------------- MAIN LOOP START -------------------------------- */
 
-    bldc_set_target_speed(&m, 300);
     TIM_enable(TIM4); // main loop trigger
 
     if(!pin_read(nFAULT_Port, nFAULT_Pin)){
@@ -135,6 +133,7 @@ int main(void)
     }
 
     printf(">> while(1)\n");
+    // bldc_set_target_speed(&m, 300);
     bldc_set_target_torque(&m, 100, 0);
     while (1){
 
