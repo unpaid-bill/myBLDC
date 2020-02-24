@@ -69,8 +69,9 @@ void bldc_init_drv(motor_TypeDef* m){
         sets overcurrent VDS_LVL to ?? (Vds = ??) default is 0.75v. Leave there for now
     */ 
     
-    pid_set_tunings(&m->q_pid, 100, 100, 100);
-    pid_set_tunings(&m->d_pid, 100, 100, 100);
+    // initialise feild oriented control (PID)
+    pid_set_tunings(&m->q_pid, 1, 1, 1);
+    pid_set_tunings(&m->d_pid, 1, 1, 1);
     m->q_set = 0;
     m->d_set = 0;
     printf("PID params intitialised (NEED TO TUNE PID!!!\n");
@@ -110,6 +111,15 @@ void bldc_update(motor_TypeDef* m){
     // bldc_get_phase_voltage(&m->ADC_voltage_A);
     // bldc_get_phase_voltage(&m->ADC_voltage_b);
     // bldc_get_phase_voltage(&m->ADC_voltage_C);
+    if(m->control_mode == POS_CTRL){
+        printf("position control\n");
+    }
+    if(m->control_mode == VEL_CTRL){
+        printf("velocity control\n");
+    }
+    if(m->control_mode == TORQUE_CTRL){
+        printf("torque control\n");
+    }
 
 
     /*  update timer with speed */

@@ -17,6 +17,19 @@
 #define CURRENT_GAIN        10.0f
 #define VDD_voltage         3.30f
 
+enum bldc_ctrl_mode
+{
+    VEL_CTRL,
+    POS_CTRL,
+    TORQUE_CTRL
+};
+
+enum bldc_direction
+{
+    FORWARD,
+    BACKWARD
+};
+
 typedef struct
 {
     uint32_t now_t;
@@ -48,6 +61,10 @@ typedef struct
     uint8_t  initialised;
     uint8_t  openloop_stage;
     uint8_t  use_encoder;
+
+    enum bldc_direction direction;
+
+    enum bldc_ctrl_mode control_mode;
     /* add FOC stuff here */
     uint8_t  use_foc;
     uint8_t  use_SVPWM;
