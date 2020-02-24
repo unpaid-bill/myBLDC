@@ -12,21 +12,27 @@ void pid_set_tunings(pid_TypeDef *pid, double kp, double ki, double kd){
 void pid_compute(pid_TypeDef *pid, uint32_t delta_t, uint32_t setpoint, double input){
     // http://brettbeauregard.com/blog/2011/04/improving-the-beginner%e2%80%99s-pid-derivative-kick/
 
-    double output;
+    double output = 0;
     double error = setpoint - input;
     double delta_in = input - pid->last_input;
-    // TODO
+
     // proportional
     // kp * error
-    output = pid->kp * error;
+    if(pid->use_P){
+        output += pid->kp * error;
+    }
 
     // integral
     // ki * (error * delta_t)
-    output += pid->ki * (error * delta_t);
+    if(pid->use_I){
+        output += pid->ki * (error * delta_t);
+    }
 
     // differential (derivative on measurement)
     // - kd * (delta_in / delta_t)
-    output -= pid->kd * (delta_in / delta_t);
+    if(pid->use_D){
+        output -= pid->kd * (delta_in / delta_t);
+    }
 
     if(output > pid->output_max){
         output = pid->output_max;

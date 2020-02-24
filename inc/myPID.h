@@ -16,6 +16,10 @@ typedef struct
     double last_error;
     double output_max;
     double output_min;
+
+    uint8_t use_P;
+    uint8_t use_I;
+    uint8_t use_D;
     
 } pid_TypeDef;
 
