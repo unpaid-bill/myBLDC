@@ -8,21 +8,21 @@ void SPI_Init(SPI_TypeDef *spi){
     // PA6, MISO, cnf = input floating, mode = input
     // PA7, MOSI, cnf = AFPP, mode = 50MHz
 
-    spi->CR1 =   0b0000100100111101;
+    // spi->CR1 =   0b0000100100111101;
     // BIDIMODE    0   2-line unidirectional mode
     // BIDIOE      x   not one line bidirectional
     // CRCEN       0   CRC disabled
     // CRCNEXT     0   /X. No CRC
-    // DFF         1   16 bit mode
     // RXONLY      0   transmit and receive
     // SSM         0   software slave management
-    // SSI         1   slave select high
     // LSBFIRST    0   MSB first
     // SPE         0   SPI NOT enabled (enabled below)
-    // BR[2:0]     011 fpclk/16    arbitrary setting
-    // MSTR        1   Master configuration
     // CPOL        0   low when idle
-    // CPHA        1   second edge
+    spi->CR1 |= SPI_CR1_DFF                 // 16 bit mode
+              | SPI_CR1_SSI                 // slave select high
+              | SPI_CR1_BR_0 | SPI_CR1_BR_1 // fpclk/16    arbitrary setting
+              | SPI_CR1_MSTR                // Master configuration
+              | SPI_CR1_CPHA;               // second edge
 
     spi->CR2      = 0b0000000000000100;
     // TXEIE       0   Tx buffer interupt not enabled
